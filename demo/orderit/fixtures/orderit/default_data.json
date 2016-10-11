@@ -1,0 +1,114 @@
+[
+  {
+    "fields": {
+      "name": "orderit/user",
+      "permissions": [
+        [
+          "can_start_order",
+          "orderit",
+          "orderitcompleteprojectprocess"
+        ],
+        [
+          "view_orderitcompleteprojectprocess",
+          "orderit",
+          "orderitcompleteprojectprocess"
+        ]
+      ]
+    },
+    "model": "auth.group"
+  },
+  {
+    "fields": {
+      "name": "orderit/admin",
+      "permissions": [
+        [
+          "can_verify_order",
+          "orderit",
+          "orderitcompleteprojectprocess"
+        ],
+        [
+          "can_deploy_virtual_machines",
+          "orderit",
+          "orderitcompleteprojectprocess"
+        ],
+        [
+          "can_confirm_security_status",
+          "orderit",
+          "orderitcompleteprojectprocess"
+        ],
+        [
+          "view_orderitcompleteprojectprocess",
+          "orderit",
+          "orderitcompleteprojectprocess"
+        ]
+      ]
+    },
+    "model": "auth.group"
+  },
+  {
+    "fields": {
+      "name": "orderit/manager",
+      "permissions": [
+        [
+          "can_confirm_order",
+          "orderit",
+          "orderitcompleteprojectprocess"
+        ],
+        [
+          "can_confirm_security_status",
+          "orderit",
+          "orderitcompleteprojectprocess"
+        ],
+        [
+          "can_confirm_external_ip",
+          "orderit",
+          "orderitcompleteprojectprocess"
+        ],
+        [
+          "can_deploy_external_ip",
+          "orderit",
+          "orderitcompleteprojectprocess"
+        ],
+        [
+          "view_orderitcompleteprojectprocess",
+          "orderit",
+          "orderitcompleteprojectprocess"
+        ]
+      ]
+    },
+    "model": "auth.group"
+  },
+  {
+    "model": "auth.user",
+    "fields": {
+      "username": "orderit/user1",
+      "groups": [
+        [
+          "orderit/user"
+        ]
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "fields": {
+      "username": "orderit/admin1",
+      "groups": [
+        [
+          "orderit/admin"
+        ]
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "fields": {
+      "username": "orderit/manager1",
+      "groups": [
+        [
+          "orderit/manager"
+        ]
+      ]
+    }
+  }
+]

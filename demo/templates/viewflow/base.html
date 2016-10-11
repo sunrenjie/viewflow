@@ -49,7 +49,8 @@
                       </ul>
                   </li>
                   {% endif %}
-                  {% endblock %}
+              </ul>
+              {% endblock %}
           </div>
       </nav>
       <div style="width:300px;position:absolute; padding-top:2rem;">
@@ -67,6 +68,9 @@
                                       {% endif %}
                                       {% if perms.customnode.view_dynamicsplitprocess %}
                                       <li><a href="{% url 'split:index' %}">&nbsp;&nbsp;&nbsp;&nbsp;Dynamic split</a></li>
+                                      {% endif %}
+                                      {% if perms.orderit.view_orderitcompleteprojectprocess %}
+                                      <li><a href="{% url 'orderit:index' %}">&nbsp;&nbsp;&nbsp;&nbsp;OrderIt Complete Process</a></li>
                                       {% endif %}
                                   </ul>
                               </li>

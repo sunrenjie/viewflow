@@ -26,10 +26,12 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'debug_toolbar',
     'viewflow',
     'demo.customnode',
     'demo.helloworld',
     'demo.shipment',
+    'demo.orderit',
 )
 
 MIDDLEWARE_CLASSES = (
