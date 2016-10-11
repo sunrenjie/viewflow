@@ -1,7 +1,7 @@
 from viewflow import flow
 from viewflow.base import this, Flow
 from viewflow.flow.views import UpdateProcessView
-from viewflow.lock import select_for_update_lock
+from viewflow.lock import select_for_update_lock, CacheLock
 
 from . import views
 from .models import ShipmentProcess, ShipmentTask
@@ -10,7 +10,7 @@ from .models import ShipmentProcess, ShipmentTask
 class ShipmentFlow(Flow):
     process_class = ShipmentProcess
     task_class = ShipmentTask
-    lock_impl = select_for_update_lock
+    lock_impl = CacheLock()
 
     summary_template = """
         Shipment {{ process.shipment.shipmentitem_set.count }} items
@@ -57,7 +57,7 @@ class ShipmentFlow(Flow):
             views.ShipmentView,
             fields=["need_insurance"])
         .Assign(lambda act: act.process.created_by)
-        .Next('split_on_insurance')
+        .Next(this.split_on_insurance)
     )
 
     split_on_insurance = (

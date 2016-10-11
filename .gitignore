@@ -9,3 +9,4 @@ MANIFEST
 db*.sqlite3
 docs/_build/**
 tests/local_settings.py
+demo/local_settings.py

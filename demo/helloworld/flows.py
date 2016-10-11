@@ -15,7 +15,7 @@ class HelloWorldFlow(Flow):
     This process demonstrates hello world approval request flow.
     """
     process_class = HelloWorldProcess
-    lock_impl = lock.select_for_update_lock
+    lock_impl = lock.CacheLock()
 
     summary_template = "'{{ process.text }}' message to the world"
 
