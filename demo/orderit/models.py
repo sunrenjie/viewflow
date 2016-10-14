@@ -51,6 +51,7 @@ class Order(models.Model):
     is_active = models.BooleanField(default=True)
 
     vms_amended = models.BooleanField(default=False)
+    vms_request_for_review = models.BooleanField(default=False)
     vms_verified = models.BooleanField(default=False)
     vms_confirmed = models.BooleanField(default=False)
     vms_deployed = models.BooleanField(default=False)

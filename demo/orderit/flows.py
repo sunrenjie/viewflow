@@ -17,21 +17,21 @@ class OrderItCompleteProjectFlow(Flow):
     start = (
         flow.Start(views.start_view)
             .Permission('orderit.can_start_order')
-        .Next(this.split_review_and_amend)
-    )
-
-    split_review_and_amend = (
-        flow.Split()
         .Next(this.user_amend_order)
-        .Next(this.admin_review_order)
     )
 
     user_amend_order = (
         flow.View(
             views.OrderCompleteProjectView,
-            fields=['vms_amended']
+            fields=['vms_amended', 'vms_request_for_review']
         ).Assign(lambda act: act.process.created_by)
-        .Next(this.join_review_and_amend)
+        .Next(this.check_vms_request_for_review)
+    )
+
+    check_vms_request_for_review = (
+        flow.If(cond=lambda act: act.process.order.vms_request_for_review)
+        .Then(this.admin_review_order)
+        .Else(this.user_amend_order)
     )
 
     admin_review_order = (
@@ -39,8 +39,13 @@ class OrderItCompleteProjectFlow(Flow):
             views.OrderCompleteProjectView,
             fields=['vms_verified']
         ).Permission('orderit.can_verify_order').Next(
-            this.manager_confirm_order
-        )
+            this.check_vms_verification)
+    )
+
+    check_vms_verification = (
+        flow.If(cond=lambda act: act.process.order.vms_verified)
+        .Then(this.manager_confirm_order)
+        .Else(this.user_amend_order)
     )
 
     manager_confirm_order = (
@@ -48,13 +53,14 @@ class OrderItCompleteProjectFlow(Flow):
             views.OrderCompleteProjectView,
             fields=['vms_confirmed']
         ).Permission('orderit.can_confirm_order').Next(
-            this.join_review_and_amend
+            this.check_vms_confirmation
         )
     )
 
-    join_review_and_amend = (
-        flow.Join()
-        .Next(this.deploy_virtual_machines)
+    check_vms_confirmation = (
+        flow.If(cond=lambda act: act.process.order.vms_confirmed)
+        .Then(this.deploy_virtual_machines)
+        .Else(this.user_amend_order)
     )
 
     deploy_virtual_machines = (
@@ -62,8 +68,7 @@ class OrderItCompleteProjectFlow(Flow):
             views.OrderCompleteProjectView,
             fields=['vms_deployed']
         ).Permission('orderit.can_deploy_virtual_machines').Next(
-            this.install_vm_software
-        )
+            this.install_vm_software)
     )
 
     install_vm_software = (
@@ -71,8 +76,7 @@ class OrderItCompleteProjectFlow(Flow):
             views.OrderCompleteProjectView,
             fields=['vms_software_installed']
         ).Assign(lambda act: act.process.created_by).Next(
-            this.fix_vm_security
-        )
+            this.fix_vm_security)
     )
 
     fix_vm_security = (
@@ -80,8 +84,7 @@ class OrderItCompleteProjectFlow(Flow):
             views.OrderCompleteProjectView,
             fields=['security_fixed']
         ).Assign(lambda act: act.process.created_by).Next(
-            this.confirm_vm_security
-        )
+            this.confirm_vm_security)
     )
 
     confirm_vm_security = (
@@ -90,23 +93,21 @@ class OrderItCompleteProjectFlow(Flow):
             views.OrderCompleteProjectView,
             fields=['security_confirmed']
         ).Permission('orderit.can_confirm_security_status').Next(
-            this.check_security
-        )
+            this.check_security_confirmation)
     )
 
-    check_security = (
+    check_security_confirmation = (
         flow.If(cond=lambda act: act.process.is_security_clear())
-        .Then(this.alloc_external_ip)
+        .Then(this.request_external_ip)
         .Else(this.fix_vm_security)
     )
 
-    alloc_external_ip = (
+    request_external_ip = (
         flow.View(
             views.OrderCompleteProjectView,
             fields=['external_ip']
         ).Assign(lambda act: act.process.created_by).Next(
-            this.confirm_external_ip
-        )
+            this.confirm_external_ip)
     )
 
     confirm_external_ip = (
@@ -114,14 +115,13 @@ class OrderItCompleteProjectFlow(Flow):
             views.OrderCompleteProjectView,
             fields=['external_ip_confirmed']
         ).Permission('orderit.can_confirm_external_ip').Next(
-            this.check_external_ip
-        )
+            this.check_external_ip)
     )
 
     check_external_ip = (
         flow.If(cond=lambda act: act.process.is_external_ip_confirmed())
         .Then(this.deploy_external_ip)
-        .Else(this.alloc_external_ip)
+        .Else(this.request_external_ip)
     )
 
     deploy_external_ip = (
@@ -129,8 +129,7 @@ class OrderItCompleteProjectFlow(Flow):
             views.OrderCompleteProjectView,
             fields=['external_ip_deployed']
         ).Permission('orderit.can_deploy_external_ip').Next(
-            this.end
-        )
+            this.end)
     )
 
     end = flow.End()
