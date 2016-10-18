@@ -12,3 +12,6 @@ DATABASES = {
 
 # Time zone
 TIME_ZONE = 'Asia/Shanghai'
+
+# language code
+LANGUAGE_CODE = 'zh-hans'

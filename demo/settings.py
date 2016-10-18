@@ -1,7 +1,7 @@
 import os
 import django
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
+ROOT_DIR = os.path.dirname(__file__)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
@@ -41,6 +41,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
 )
 
 ROOT_URLCONF = 'demo.urls'
@@ -130,3 +131,5 @@ try:
     from demo.local_settings import *  # NOQA
 except ImportError:
     pass
+
+# LOCALE_PATHS = tuple([os.path.join(ROOT_DIR, p, 'locale') for p in ['helloworld', 'shipment', 'customnode', 'orderit']])

@@ -2,6 +2,9 @@ from django.core.exceptions import PermissionDenied
 from django.forms.models import modelform_factory, inlineformset_factory
 from django.views import generic
 from django.shortcuts import render, redirect
+
+from django.utils.translation import ugettext as _
+
 from viewflow.flow import flow_start_view
 from viewflow.flow.views import FlowViewMixin, get_next_task_url
 
@@ -17,11 +20,18 @@ from .permissions import IsOwnerOfProject, IsSuperPowerfulUser, IsOwnerOfOrder
 def start_view(request):
     form_class = modelform_factory(Project, fields=[
         'name',
-    ])
+    ], labels={'name': _('Project Name')})
 
     formset_class = inlineformset_factory(Project, OrderVM, fields=[
         'name', 'sockets', 'cores_per_socket', 'memory_GB', 'disks', 'nics'
-    ])
+    ], labels={
+        'name': 'Virtual Machine Name',
+        'sockets': 'Number of CPU Sockets',
+        'cores_per_socket': 'Number of CPU Cores per Socket',
+        'memory_GB': 'Memory (GB)',
+        'disks': 'Disks (separated by ";")',
+        'nics': 'Network (separated by ";")',
+    })
 
     if not request.activation.has_perm(request.user):
         raise PermissionDenied
