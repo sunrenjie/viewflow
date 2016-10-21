@@ -24,14 +24,7 @@ def start_view(request):
 
     formset_class = inlineformset_factory(Project, OrderVM, fields=[
         'name', 'sockets', 'cores_per_socket', 'memory_GB', 'disks', 'nics'
-    ], labels={
-        'name': 'Virtual Machine Name',
-        'sockets': 'Number of CPU Sockets',
-        'cores_per_socket': 'Number of CPU Cores per Socket',
-        'memory_GB': 'Memory (GB)',
-        'disks': 'Disks (separated by ";")',
-        'nics': 'Network (separated by ";")',
-    })
+    ])
 
     if not request.activation.has_perm(request.user):
         raise PermissionDenied

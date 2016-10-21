@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-18 14:49+0800\n"
+"POT-Creation-Date: 2016-10-19 12:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,6 +18,102 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: demo/orderit/views.py:23
+#: models.py:37
+msgid "Owner"
+msgstr "拥有者"
+
+#: models.py:38 models.py:41 models.py:52 models.py:81
+#, fuzzy
+#| msgid "Project Name"
+msgid "Project"
+msgstr "业务平台"
+
+#: models.py:53
+msgid "Is Active"
+msgstr "处于活动状态？"
+
+#: models.py:55
+msgid "VM order is amended?"
+msgstr "虚机订单被修改？"
+
+#: models.py:56
+msgid "VM order waiting for review?"
+msgstr "虚机订单等待审阅？"
+
+#: models.py:57
+msgid "VM order verified"
+msgstr "虚机订单已被验证"
+
+#: models.py:58
+msgid "VM order confirmed"
+msgstr "虚机订单已被确认"
+
+#: models.py:59
+msgid "VM order deployed"
+msgstr "虚机订单已部署"
+
+#: models.py:60
+msgid "VM software installed"
+msgstr "虚机软件已安装"
+
+#: models.py:62
+msgid "Security fixed"
+msgstr "安全问题已解决"
+
+#: models.py:63
+msgid "Security clear status confirmed"
+msgstr "安全状态已确认"
+
+#: models.py:65
+msgid "External IP"
+msgstr "外部IP"
+
+#: models.py:66
+msgid "External IP confirmed"
+msgstr "外部IP已确定"
+
+#: models.py:67
+msgid "External IP deployed"
+msgstr "外部IP已部署"
+
+#: models.py:73 models.py:82 models.py:100
+msgid "Order"
+msgstr "订单"
+
+#: models.py:83
+msgid "VM Name"
+msgstr "虚机名称"
+
+#: models.py:84
+msgid "VM CPU #sockets"
+msgstr "虚机CPU插槽数"
+
+#: models.py:85
+msgid "VM CPU #cores per #socket"
+msgstr "虚机CPU每插槽的核数"
+
+#: models.py:86
+msgid "VM memory(GB)"
+msgstr "虚机内存（GB）"
+
+#: models.py:87
+msgid "VM disks"
+msgstr "虚机磁盘"
+
+#: models.py:88
+msgid "VM NICs"
+msgstr "虚机网卡"
+
+#: models.py:92
+#, fuzzy
+#| msgid "Order"
+msgid "VM Order"
+msgstr "虚机订单"
+
+#: models.py:118
+msgid "OrderIt Complete Project Process"
+msgstr "完整的业务平台创建部署工作流"
+
+#: views.py:23
 msgid "Project Name"
 msgstr "业务平台名称"

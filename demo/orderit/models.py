@@ -4,6 +4,7 @@ from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.db import models, IntegrityError
+from django.utils.translation import ugettext as _
 
 from viewflow.models import Process, Task
 
@@ -33,10 +34,11 @@ class Project(models.Model):
     # POST, such columns will not be included. Only one first is special, as it is already from session.
     id = models.CharField(max_length=36, primary_key=True,
                           default=generate_uuid_hex, editable=False)
-    owner = models.ForeignKey(User, editable=False)
-    name = models.CharField(max_length=32)
+    owner = models.ForeignKey(User, editable=False, verbose_name=_('Owner'))
+    name = models.CharField(max_length=32, verbose_name=_('Project'))
 
     class Meta:
+        verbose_name=_('Project')
         unique_together= (('owner', 'name'), )  # only uniqueness in the owner's universe
 
 
@@ -47,25 +49,28 @@ class Order(models.Model):
     # whether the object POST'ed by the user is an existing one.
     id = models.CharField(max_length=26, primary_key=True, editable=False,
                           default=generate_random_order_id_with_full_datetime_prefix)
-    project = models.ForeignKey(Project)
-    is_active = models.BooleanField(default=True)
+    project = models.ForeignKey(Project, verbose_name=_('Project'))
+    is_active = models.BooleanField(default=True, verbose_name=_('Is Active'))
 
-    vms_amended = models.BooleanField(default=False)
-    vms_request_for_review = models.BooleanField(default=False)
-    vms_verified = models.BooleanField(default=False)
-    vms_confirmed = models.BooleanField(default=False)
-    vms_deployed = models.BooleanField(default=False)
-    vms_software_installed = models.BooleanField(default=False)
+    vms_amended = models.BooleanField(default=False, verbose_name=_('VM order is amended?'))
+    vms_request_for_review = models.BooleanField(default=False, verbose_name=_('VM order waiting for review?'))
+    vms_verified = models.BooleanField(default=False, verbose_name=_('VM order verified'))
+    vms_confirmed = models.BooleanField(default=False, verbose_name=_('VM order confirmed'))
+    vms_deployed = models.BooleanField(default=False, verbose_name=_('VM order deployed'))
+    vms_software_installed = models.BooleanField(default=False, verbose_name=_('VM software installed'))
 
-    security_fixed = models.BooleanField(default=False)
-    security_confirmed = models.BooleanField(default=False)
+    security_fixed = models.BooleanField(default=False, verbose_name=_('Security fixed'))
+    security_confirmed = models.BooleanField(default=False, verbose_name=_('Security clear status confirmed'))
 
-    external_ip = models.CharField(max_length=1024)  # separated by ';'
-    external_ip_confirmed = models.BooleanField(default=False)
-    external_ip_deployed = models.BooleanField(default=False)
+    external_ip = models.CharField(max_length=1024, verbose_name=_('External IP'))  # separated by ';'
+    external_ip_confirmed = models.BooleanField(default=False, verbose_name=_('External IP confirmed'))
+    external_ip_deployed = models.BooleanField(default=False, verbose_name=_('External IP deployed'))
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    class Meta:
+        verbose_name=_('Order')
 
 
 class OrderVM(models.Model):
@@ -73,17 +78,18 @@ class OrderVM(models.Model):
     # TODO come up with a better technique to avoid the awkward redundancy.
     id = models.CharField(max_length=23, primary_key=True, editable=False,
                           default=generate_random_vm_id_with_full_datetime_prefix)
-    project = models.ForeignKey(Project, editable=False)  # auto-assigned at save()
-    order = models.ForeignKey(Order, related_name='VMs')  # for handling together in API
-    name = models.CharField(max_length=16)
-    sockets = models.IntegerField()
-    cores_per_socket = models.IntegerField()
-    memory_GB = models.IntegerField()
-    disks = models.CharField(max_length=32)  # real numbers (of disk size; GB) separated by ';'
-    nics = models.CharField(max_length=1024)  # separated by ';'
+    project = models.ForeignKey(Project, editable=False, verbose_name=_('Project'))  # auto-assigned at save()
+    order = models.ForeignKey(Order, related_name='VMs', verbose_name=_('Order'))  # for handling together in API
+    name = models.CharField(max_length=16, verbose_name=_('VM Name'))
+    sockets = models.IntegerField(verbose_name=_('VM CPU #sockets'))
+    cores_per_socket = models.IntegerField(verbose_name=_('VM CPU #cores per #socket'))
+    memory_GB = models.IntegerField(verbose_name=_('VM memory(GB)'))
+    disks = models.CharField(max_length=32, verbose_name=_('VM disks'))  # real numbers (of disk size; GB) separated by ';'
+    nics = models.CharField(max_length=1024, verbose_name=_('VM NICs'))  # separated by ';'
 
     class Meta:
-        unique_together= (('project', 'name'), )
+        unique_together = (('project', 'name'), )
+        verbose_name = _('VM Order')
 
     def save(self, *args, **kargs):
         self.project = self.order.project
@@ -91,7 +97,7 @@ class OrderVM(models.Model):
 
 
 class OrderItCompleteProjectProcess(Process):
-    order = models.ForeignKey(Order, blank=True, null=True)
+    order = models.ForeignKey(Order, blank=True, null=True, verbose_name=_('Order'))
 
     def is_security_clear(self):
         try:
@@ -109,6 +115,7 @@ class OrderItCompleteProjectProcess(Process):
             return False
 
     class Meta:
+        verbose_name = _('OrderIt Complete Project Process')
         verbose_name_plural = 'Order complete project process list'
         permissions = [
             ('can_start_order', 'Can initiate an order process'),
