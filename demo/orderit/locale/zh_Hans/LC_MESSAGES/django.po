@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-19 12:45+0800\n"
+"POT-Creation-Date: 2016-10-26 19:47+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,13 +18,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#: flows.py:14
+msgid "Start an OrderIt complete project process"
+msgstr "开始开通一个完整的业务平台"
+
 #: models.py:37
 msgid "Owner"
 msgstr "拥有者"
 
 #: models.py:38 models.py:41 models.py:52 models.py:81
-#, fuzzy
-#| msgid "Project Name"
 msgid "Project"
 msgstr "业务平台"
 

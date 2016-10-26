@@ -1,3 +1,5 @@
+from django.utils.translation import ugettext_lazy as _
+
 from viewflow import flow
 from viewflow.base import this, Flow
 from viewflow.flow.views import UpdateProcessView
@@ -5,6 +7,11 @@ from viewflow.lock import select_for_update_lock, CacheLock
 
 from .models import OrderItCompleteProjectProcess, BangusTask
 from . import views
+
+
+class OrderItCompleteProjectFlowStart(flow.Start):
+    # subclassing for the sole purpose of customization of the task title
+    task_title = _("Start an OrderIt complete project process")
 
 
 class OrderItCompleteProjectFlow(Flow):
@@ -15,7 +22,7 @@ class OrderItCompleteProjectFlow(Flow):
     summary_template = """foo--bar---"""
 
     start = (
-        flow.Start(views.start_view)
+        OrderItCompleteProjectFlowStart(views.start_view)
             .Permission('orderit.can_start_order')
         .Next(this.user_amend_order)
     )

@@ -3,7 +3,7 @@ from django.forms.models import modelform_factory, inlineformset_factory
 from django.views import generic
 from django.shortcuts import render, redirect
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from viewflow.flow import flow_start_view
 from viewflow.flow.views import FlowViewMixin, get_next_task_url
@@ -47,8 +47,9 @@ def start_view(request):
             item.project = project
             item.order = order
             item.save()
-            request.activation.done()
-            return redirect(get_next_task_url(request, request.process))
+
+        request.activation.done()
+        return redirect(get_next_task_url(request, request.process))
     return render(request, 'orderit/complete_project_start.html', {
         'activation': request.activation,
         'form': form,
