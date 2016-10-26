@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-26 19:47+0800\n"
+"POT-Creation-Date: 2016-10-26 13:32+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,10 +23,14 @@ msgid "Start an OrderIt complete project process"
 msgstr "开始开通一个完整的业务平台"
 
 #: models.py:37
-msgid "Owner"
-msgstr "拥有者"
+msgid "Project Owner"
+msgstr "业务平台所有者"
 
-#: models.py:38 models.py:41 models.py:52 models.py:81
+#: models.py:38 views.py:23
+msgid "Project Name"
+msgstr "业务平台名称"
+
+#: models.py:41 models.py:52 models.py:81
 msgid "Project"
 msgstr "业务平台"
 
@@ -115,7 +119,3 @@ msgstr "虚机订单"
 #: models.py:118
 msgid "OrderIt Complete Project Process"
 msgstr "完整的业务平台创建部署工作流"
-
-#: views.py:23
-msgid "Project Name"
-msgstr "业务平台名称"

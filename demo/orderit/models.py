@@ -34,8 +34,8 @@ class Project(models.Model):
     # POST, such columns will not be included. Only one first is special, as it is already from session.
     id = models.CharField(max_length=36, primary_key=True,
                           default=generate_uuid_hex, editable=False)
-    owner = models.ForeignKey(User, editable=False, verbose_name=_('Owner'))
-    name = models.CharField(max_length=32, verbose_name=_('Project'))
+    owner = models.ForeignKey(User, editable=False, verbose_name=_('Project Owner'))
+    name = models.CharField(max_length=32, verbose_name=_('Project Name'))
 
     class Meta:
         verbose_name=_('Project')

@@ -33,15 +33,19 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
             ],
+            options={
+                'verbose_name': 'Order',
+            },
         ),
         migrations.CreateModel(
             name='OrderItCompleteProjectProcess',
             fields=[
                 ('process_ptr', models.OneToOneField(primary_key=True, parent_link=True, auto_created=True, serialize=False, to='viewflow.Process')),
-                ('order', models.ForeignKey(null=True, to='orderit.Order', verbose_name='排序', blank=True)),
+                ('order', models.ForeignKey(null=True, verbose_name='Order', to='orderit.Order', blank=True)),
             ],
             options={
                 'verbose_name_plural': 'Order complete project process list',
+                'verbose_name': 'OrderIt Complete Project Process',
                 'permissions': [('can_start_order', 'Can initiate an order process'), ('can_verify_order', 'Can verify that an order is technically possible'), ('can_confirm_order', 'Can confirm an order'), ('can_deploy_virtual_machines', 'Can deploy virtual machines'), ('can_confirm_security_status', 'Can confirm that the VMs are secure according to security scan'), ('can_confirm_external_ip', 'Can confirm external IP'), ('can_deploy_external_ip', 'Can implemet external IP')],
             },
             bases=('viewflow.process',),
@@ -56,16 +60,22 @@ class Migration(migrations.Migration):
                 ('memory_GB', models.IntegerField(verbose_name='VM memory(GB)')),
                 ('disks', models.CharField(max_length=32, verbose_name='VM disks')),
                 ('nics', models.CharField(max_length=1024, verbose_name='VM NICs')),
-                ('order', models.ForeignKey(to='orderit.Order', verbose_name='排序', related_name='VMs')),
+                ('order', models.ForeignKey(verbose_name='Order', to='orderit.Order', related_name='VMs')),
             ],
+            options={
+                'verbose_name': 'VM Order',
+            },
         ),
         migrations.CreateModel(
             name='Project',
             fields=[
                 ('id', models.CharField(default=demo.orderit.models.generate_uuid_hex, max_length=36, editable=False, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=32, verbose_name='Project')),
-                ('owner', models.ForeignKey(editable=False, to=settings.AUTH_USER_MODEL, verbose_name='Owner')),
+                ('name', models.CharField(max_length=32, verbose_name='Project Name')),
+                ('owner', models.ForeignKey(editable=False, verbose_name='Project Owner', to=settings.AUTH_USER_MODEL)),
             ],
+            options={
+                'verbose_name': 'Project',
+            },
         ),
         migrations.CreateModel(
             name='BangusTask',
