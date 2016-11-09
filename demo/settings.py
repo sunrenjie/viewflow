@@ -1,5 +1,11 @@
+import sys
 import os
 import django
+
+if sys.platform == 'win32':  # TODO expand compatibility to 64-bit Python.
+    import pymysql
+    pymysql.install_as_MySQLdb()
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ROOT_DIR = os.path.dirname(__file__)
 
@@ -26,7 +32,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'debug_toolbar',
     'viewflow',
     'demo.customnode',
     'demo.helloworld',
