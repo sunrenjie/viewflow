@@ -61,7 +61,7 @@ class FlowViewSet(object):
         return url(regexp, view, name=name)
 
     def get_list_urls(self):
-        attrs = (getattr(self, attr) for attr in self.__dir__() if attr.endswith('_view'))
+        attrs = (getattr(self, attr) for attr in dir(self) if attr.endswith('_view'))
         return [
             self.create_url_entry(value)
             for value in attrs if isinstance(value, (list, tuple))

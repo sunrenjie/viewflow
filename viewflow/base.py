@@ -4,6 +4,7 @@ Flow definition
 import re
 from collections import defaultdict
 from textwrap import dedent
+import six
 
 from django.conf.urls import include, url
 
@@ -26,7 +27,7 @@ class _Resolver(object):
             if not node:
                 raise ValueError("Can't found node with name %s" % link.name)
             return node
-        elif isinstance(link, str):
+        elif isinstance(link, six.string_types):
             node = self.nodes.get(link)
             if not node:
                 raise ValueError("Can't found node with name %s" % link)
@@ -162,7 +163,8 @@ class FlowMetaClass(type):
         return new_class
 
 
-class Flow(object, metaclass=FlowMetaClass):
+@six.add_metaclass(FlowMetaClass)
+class Flow(object):
     """
     Base class for flow definition
 

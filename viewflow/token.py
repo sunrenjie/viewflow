@@ -1,3 +1,4 @@
+import six
 from itertools import count
 from .compat import deconstructible
 
@@ -40,7 +41,7 @@ class Token(object):
     def __eq__(self, other):
         if isinstance(other, Token):
             other_token = other.token
-        elif isinstance(other, str):
+        elif isinstance(other, six.string_types):
             other_token = other
         else:
             return NotImplemented

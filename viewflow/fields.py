@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import six
 
 from django.db import models
 from .compat import get_app_package, get_containing_app_data, import_string
@@ -86,7 +87,8 @@ def _make_contrib(superclass, func=None):
     return contribute_to_class
 
 
-class FlowReferenceField(models.CharField, metaclass=_SubfieldBase):
+@six.add_metaclass(_SubfieldBase)
+class FlowReferenceField(models.CharField):
     description = """Flow class reference field,
     stores flow as app_label/flows.FlowName> to
     avoid possible collisions with app name changes"""
@@ -96,14 +98,14 @@ class FlowReferenceField(models.CharField, metaclass=_SubfieldBase):
         super(FlowReferenceField, self).__init__(*args, **kwargs)
 
     def to_python(self, value):
-        if isinstance(value, str) and value:
+        if isinstance(value, six.string_types) and value:
             return import_flow_by_ref(value)
         return value
 
     def get_prep_value(self, value):
         if value is None or value == '':
             return value
-        elif isinstance(value, str):
+        elif isinstance(value, six.string_types):
             return value
         elif isinstance(value, ClassValueWrapper):
             value = value.cls
@@ -120,20 +122,21 @@ class FlowReferenceField(models.CharField, metaclass=_SubfieldBase):
         return self.get_prep_value(value)
 
 
-class TaskReferenceField(models.CharField, metaclass=_SubfieldBase):
+@six.add_metaclass(_SubfieldBase)
+class TaskReferenceField(models.CharField):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('max_length', 255)
         super(TaskReferenceField, self).__init__(*args, **kwargs)
 
     def to_python(self, value):
-        if isinstance(value, str) and value:
+        if isinstance(value, six.string_types) and value:
             return import_task_by_ref(value)
         return value
 
     def get_prep_value(self, value):
         if value is None or value == '':
             return value
-        elif not isinstance(value, str):
+        elif not isinstance(value, six.string_types):
             return get_task_ref(value)
         return value
 
@@ -142,22 +145,23 @@ class TaskReferenceField(models.CharField, metaclass=_SubfieldBase):
         return self.get_prep_value(value)
 
 
-class TokenField(models.CharField, metaclass=_SubfieldBase):
+@six.add_metaclass(_SubfieldBase)
+class TokenField(models.CharField):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('max_length', 150)
         if 'default' in kwargs:
             default = kwargs['default']
-            if isinstance(default, str):
+            if isinstance(default, six.string_types):
                 kwargs['default'] = Token(default)
         super(TokenField, self).__init__(*args, **kwargs)
 
     def to_python(self, value):
-        if isinstance(value, str) and value:
+        if isinstance(value, six.string_types) and value:
             return Token(value)
         return value
 
     def get_prep_value(self, value):
-        if not isinstance(value, str) and value:
+        if not isinstance(value, six.string_types) and value:
             return value.token
         return super(TokenField, self).get_prep_value(value)
 

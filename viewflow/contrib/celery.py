@@ -1,8 +1,11 @@
+from __future__ import absolute_import
+
 from ..activation import Activation, AbstractJobActivation, STATUS
 from ..compat import mock
 from ..fields import get_task_ref
 from ..flow import AbstractJob
 from .. import test as flow_test
+
 
 from celery.task.control import revoke
 
