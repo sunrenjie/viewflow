@@ -2,7 +2,9 @@ import sys
 import os
 import django
 
-if sys.platform == 'win32':  # TODO expand compatibility to 64-bit Python.
+try:
+    import MySQLdb  # from mysqlclient package
+except ImportError:
     import pymysql
     pymysql.install_as_MySQLdb()
 
