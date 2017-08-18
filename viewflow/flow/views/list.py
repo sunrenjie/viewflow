@@ -4,6 +4,12 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django_filters import FilterSet, ChoiceFilter, DateRangeFilter, ModelChoiceFilter
 
+from rest_framework import views as rest_views
+from rest_framework.response import Response
+from rest_framework import permissions
+
+from ... import serializers
+
 from ... import activation, models
 from ...fields import import_task_by_ref
 from .mixins import (
@@ -80,6 +86,30 @@ class AllTaskListView(LoginRequiredMixin, FlowListMixin, generic.ListView):
         return models.Task.objects.inbox(self.flows, user).order_by('-created')
 
 
+class AllTaskListRestView(FlowListMixin, rest_views.APIView):
+
+    def __init__(self, *args, **kwargs):
+        self._filter = None
+        super(AllTaskListRestView, self).__init__(*args, **kwargs)
+
+    def get_permissions(self):
+        perms = [permissions.IsAuthenticated()]
+        return perms
+
+    def get(self, request, *args, **kwargs):
+        tasks = [e for e in self.filter.qs]
+        return Response([serializers.TaskSerializer(task).data for task in tasks])
+
+    @property
+    def filter(self):
+        if self._filter is None:
+            self._filter = TaskFilter(self.request.GET, self.get_base_queryset(self.request.user))
+        return self._filter
+
+    def get_base_queryset(self, user):
+        return models.Task.objects.inbox(self.flows, user).order_by('-created')
+
+
 class AllQueueListView(LoginRequiredMixin, FlowListMixin, generic.ListView):
 
     """All unassigned tasks available for current user."""
@@ -111,6 +141,29 @@ class AllQueueListView(LoginRequiredMixin, FlowListMixin, generic.ListView):
 
     def get_base_queryset(self, user):
         return models.Task.objects.queue(self.flows, user).order_by('-created')
+
+
+class AllQueueListRestView(FlowListMixin, rest_views.APIView):
+
+    def __init__(self, *args, **kwargs):
+        self._filter = None
+        super(AllQueueListRestView, self).__init__(*args, **kwargs)
+
+    def get_queryset(self):
+        return self.filter.qs
+
+    @property
+    def filter(self):
+        if self._filter is None:
+            self._filter = TaskFilter(self.request.GET, self.get_base_queryset(self.request.user))
+        return self._filter
+
+    def get_base_queryset(self, user):
+        return models.Task.objects.queue(self.flows, user).order_by('-created')
+
+    def get(self, request, *args, **kwargs):
+        tasks = [e for e in self.filter.qs]
+        return Response([serializers.TaskSerializer(task).data for task in tasks])
 
 
 class AllArchiveListView(LoginRequiredMixin, FlowListMixin, generic.ListView):
