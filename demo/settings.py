@@ -54,6 +54,26 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'demo.urls'
 
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_SECURE = False
+
+# SESSION_TIMEOUT is a method to supersede the token timeout with a shorter
+# horizon session timeout (in seconds).  So if your token expires in 60
+# minutes, a value of 1800 will log users out after 30 minutes
+SESSION_TIMEOUT = 3600
+
+# When using cookie-based sessions, log error when the session cookie exceeds
+# the following size (common browsers drop cookies above a certain size):
+SESSION_COOKIE_MAX_SIZE = 4093
+
+# when doing upgrades, it may be wise to stick to PickleSerializer
+# NOTE(berendt): Check during the K-cycle if this variable can be removed.
+#                https://bugs.launchpad.net/horizon/+bug/1349463
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
+
+
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 import dj_database_url
