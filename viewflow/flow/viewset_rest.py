@@ -17,13 +17,13 @@ class FlowViewSet(object):
     process_list_view = [
         r'^$',
         list_rest.ProcessListRestView.as_view(),
-        'rest_app_index'
+        'index'
     ]
 
     detail_process_view = [
         r'^(?P<process_pk>\d+)/$',
         detail_rest.DetailProcessRestView.as_view(),
-        'rest_app_detail'
+        'detail'
     ]
 
     # TODO cancel_process_view is temporarily removed.
@@ -31,19 +31,19 @@ class FlowViewSet(object):
     queue_list_view = [
         '^queue/$',
         list_rest.QueueListRestView.as_view(),
-        'rest_app_queue',
+        'queue',
     ]
 
     archive_list_view = [
         '^archive/$',
         list_rest.ArchiveListRestView.as_view(),
-        'rest_app_archive',
+        'archive',
     ]
 
     inbox_list_view = [
         '^tasks/$',
         list_rest.TaskListRestView.as_view(),
-        'rest_app_tasks'
+        'tasks'
     ]
 
     def __init__(self, flow_class):
