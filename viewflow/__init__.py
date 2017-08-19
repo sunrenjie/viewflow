@@ -104,7 +104,7 @@ class Node(object):
         Subclasses could perform additional initialisation here.
         """
 
-    def urls(self):
+    def urls(self, rest=False):
         """List of urls for flow node views."""
         return []
 

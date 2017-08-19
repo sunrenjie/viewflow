@@ -39,8 +39,8 @@ class DetailViewMixin(object):
     def detail_view(self):
         return self._detail_view if self._detail_view else self.detail_view_class.as_view()
 
-    def urls(self):
-        urls = super(DetailViewMixin, self).urls()
+    def urls(self, rest=False):
+        urls = super(DetailViewMixin, self).urls(rest=rest)
         urls.append(
             url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/detail/$'.format(self.name),
                 self.detail_view, {'flow_task': self}, name="{}__detail".format(self.name))
@@ -68,8 +68,8 @@ class UndoViewMixin(object):
     def undo_view(self):
         return self._undo_view if self._undo_view else self.undo_view_class.as_view()
 
-    def urls(self):
-        urls = super(UndoViewMixin, self).urls()
+    def urls(self, rest=False):
+        urls = super(UndoViewMixin, self).urls(rest=rest)
         urls.append(
             url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/undo/$'.format(self.name),
                 self.undo_view, {'flow_task': self}, name="{}__undo".format(self.name))
@@ -90,15 +90,14 @@ class CancelViewMixin(object):
         self._cancel_view = kwargs.pop('cancel_view', None)
         super(CancelViewMixin, self).__init__(*args, **kwargs)
 
-    @property
-    def cancel_view(self):
+    def cancel_view(self, rest=False):
         return self._cancel_view if self._cancel_view else self.cancel_view_class.as_view()
 
-    def urls(self):
-        urls = super(CancelViewMixin, self).urls()
+    def urls(self, rest=False):
+        urls = super(CancelViewMixin, self).urls(rest=rest)
         urls.append(
             url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/cancel/$'.format(self.name),
-                self.cancel_view, {'flow_task': self}, name="{}__cancel".format(self.name))
+                self.cancel_view(rest=rest), {'flow_task': self}, name="{}__cancel".format(self.name))
         )
         return urls
 
@@ -120,8 +119,8 @@ class PerformViewMixin(object):
     def perform_view(self):
         return self._perform_view if self._perform_view else self.perform_view_class.as_view()
 
-    def urls(self):
-        urls = super(PerformViewMixin, self).urls()
+    def urls(self, rest=False):
+        urls = super(PerformViewMixin, self).urls(rest=rest)
         urls.append(url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/perform/$'.format(self.name),
                     self.perform_view, {'flow_task': self}, name="{}__perform".format(self.name)))
         return urls
@@ -144,8 +143,8 @@ class ActivateNextMixin(object):
     def activate_next_view(self):
         return self._activate_next_view if self._activate_next_view else self.activate_next_view_class.as_view()
 
-    def urls(self):
-        urls = super(ActivateNextMixin, self).urls()
+    def urls(self, rest=False):
+        urls = super(ActivateNextMixin, self).urls(rest=rest)
         urls.append(
             url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/activate_next/$'.format(self.name),
                 self.activate_next_view, {'flow_task': self}, name="{}__activate_next".format(self.name))

@@ -6,6 +6,11 @@ from django.shortcuts import redirect
 from django.views import generic
 from django.utils.decorators import method_decorator
 from django.utils.http import is_safe_url
+from django.views.decorators.csrf import csrf_exempt
+
+from rest_framework import views as rest_views
+from rest_framework.response import Response
+from rest_framework import status, permissions
 
 from ...decorators import flow_view
 from .actions import BaseTaskActionView
@@ -143,6 +148,42 @@ class AssignTaskView(MessageUserMixin, generic.TemplateView):
             raise PermissionDenied
 
         return super(AssignTaskView, self).dispatch(request, *args, **kwargs)
+
+    @classmethod
+    def as_view(cls, **initkwargs):
+        rest = initkwargs.pop('rest', False)
+        if rest:
+            return AssignTaskRestView.as_view(**initkwargs)
+        else:
+            return super(AssignTaskView, cls).as_view(**initkwargs)
+
+
+class AssignTaskRestView(MessageUserMixin, rest_views.APIView):
+
+    def get_permissions(self):
+        perms = [permissions.IsAuthenticated()]
+        return perms
+
+    @csrf_exempt
+    def post(self, request, *args, **kwargs):
+        if not self.activation.assign.can_proceed():
+            return Response({'message': "The task is in '%s' status and cannot be assigned." %
+                                        self.activation.task.status}, status=status.HTTP_409_CONFLICT)
+
+        if not self.activation.flow_task.can_assign(request.user, self.activation.task):
+            return Response({'message': 'The task cannot be assigned to you.'}, status=status.HTTP_403_FORBIDDEN)
+
+        self.activation.assign(self.request.user)
+        return Response({'messsage': 'Task has been assigned to you successfully.'})
+
+    @method_decorator(flow_view)
+    def dispatch(self, request, *args, **kwargs):
+        self.activation = request.activation
+        # The calls to can_proceed() and can_assign() have to be performed in post(), since at that point, we are
+        # called by rest_framework.views.dispatch(), where proper work is done such that we could return a
+        # rest_framework.response.Response object. Making the calls here will result in error.
+
+        return super(AssignTaskRestView, self).dispatch(request, *args, **kwargs)
 
 
 class UnassignTaskView(BaseTaskActionView):

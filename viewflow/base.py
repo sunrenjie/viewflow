@@ -184,14 +184,13 @@ class Flow(object):
 
     summary_template = "{{ flow_class.process_title }} - {{ process.status }}"
 
-    @property
-    def urls(self):
+    def urls(self, rest=False):
         """
         Provides ready to include urlpatterns required for this flow
         """
         node_urls = []
         for node in self._meta.nodes():
-            node_urls += node.urls()
+            node_urls += node.urls(rest=rest)
 
         return url('^', include(node_urls), {'flow_class': self})
 

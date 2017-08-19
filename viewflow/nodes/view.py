@@ -45,8 +45,8 @@ class BaseStart(mixins.TaskDescriptionViewMixin,
                 return self._view
         return self._view
 
-    def urls(self):
-        urls = super(BaseStart, self).urls()
+    def urls(self, rest=False):
+        urls = super(BaseStart, self).urls(rest=rest)
         urls.append(
             url(r'^{}/$'.format(self.name), self.view, {'flow_task': self}, name=self.name))
         return urls
@@ -144,8 +144,8 @@ class BaseView(mixins.TaskDescriptionViewMixin,
             self._view = self._view_class.as_view(**self._view_args)
         return self._view
 
-    def urls(self):
-        urls = super(BaseView, self).urls()
+    def urls(self, rest=False):
+        urls = super(BaseView, self).urls(rest=rest)
         urls.append(
             url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/$'.format(self.name),
                 self.view, {'flow_task': self}, name=self.name)
@@ -179,20 +179,18 @@ class View(mixins.PermissionMixin, BaseView):
             result._owner = owner_kwargs
         return result
 
-    @property
-    def assign_view(self):
-        return self._assign_view if self._assign_view else self.assign_view_class.as_view()
+    def assign_view(self, rest=False):
+        return self._assign_view if self._assign_view else self.assign_view_class.as_view(rest=rest)
 
-    @property
-    def unassign_view(self):
+    def unassign_view(self, rest=False):
         return self._unassign_view if self._unassign_view else self.unassign_view_class.as_view()
 
-    def urls(self):
-        urls = super(View, self).urls()
+    def urls(self, rest=False):
+        urls = super(View, self).urls(rest=rest)
         urls.append(url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/assign/$'.format(self.name),
-                    self.assign_view, {'flow_task': self}, name="{}__assign".format(self.name)))
+                    self.assign_view(rest=rest), {'flow_task': self}, name="{}__assign".format(self.name)))
         urls.append(url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/unassign/$'.format(self.name),
-                    self.unassign_view, {'flow_task': self}, name="{}__unassign".format(self.name)))
+                    self.unassign_view(rest=rest), {'flow_task': self}, name="{}__unassign".format(self.name)))
         return urls
 
     def get_task_url(self, task, url_type='guess', namespace='', **kwargs):

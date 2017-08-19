@@ -71,5 +71,5 @@ class FlowViewSet(object):
     def urls(self):
         return [
             url('', include(self.get_list_urls()), {'flow_class': self.flow_class}),
-            self.flow_class.instance.urls
+            self.flow_class.instance.urls()
         ]
