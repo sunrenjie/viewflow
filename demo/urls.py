@@ -12,7 +12,8 @@ from .shipment.flows import ShipmentFlow
 from .customnode.flows import DynamicSplitFlow
 from .orderit.flows import OrderItCompleteProjectFlow
 
-from viewflow.views import LoginView, LogoutView
+from viewflow.rest_views import LoginRestView, LogoutRestView
+from viewflow.flow.views import list_rest
 
 if django.VERSION < (1, 7):
     admin.autodiscover()
@@ -29,10 +30,11 @@ router = routers.SimpleRouter()
 urlpatterns = [
     url(r'^$', viewflow.AllProcessListView.as_view(ns_map=flows), name="index"),
     url('^api/v1/', include(router.urls)),
-    url('^api/v1/auth/login/$', LoginView.as_view(), name='rest_login'),
-    url('^api/v1/auth/logout/$', LogoutView.as_view(), name='rest_logout'),
-    url('^api/v1/viewflow/tasks/$', viewflow.AllTaskListRestView.as_view(ns_map=flows), name='rest_viewflow_tasks'),
-    url('^api/v1/viewflow/queue/$', viewflow.AllQueueListRestView.as_view(ns_map=flows), name='rest_viewflow_queue'),
+    url('^api/v1/auth/login/$', LoginRestView.as_view(), name='rest_login'),
+    url('^api/v1/auth/logout/$', LogoutRestView.as_view(), name='rest_logout'),
+    url('^api/v1/viewflow/tasks/$', list_rest.AllTaskListRestView.as_view(ns_map=flows), name='rest_viewflow_tasks'),
+    url('^api/v1/viewflow/queue/$', list_rest.AllQueueListRestView.as_view(ns_map=flows), name='rest_viewflow_queue'),
+    url('^api/v1/viewflow/orderit/', include('demo.orderit.urls_rest', namespace='rest_app_orderit')),
     url(r'^tasks/$', viewflow.AllTaskListView.as_view(ns_map=flows), name="tasks"),
     url(r'^queue/$', viewflow.AllQueueListView.as_view(ns_map=flows), name="queue"),
 

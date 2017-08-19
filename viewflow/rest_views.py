@@ -21,7 +21,7 @@ from .permissions import IsAccountOwner
 from .serializers import AccountSerializer
 
 
-class LoginView(views.APIView):
+class LoginRestView(views.APIView):
     @csrf_exempt
     def post(self, request, format=None):
         # To convert request.body to json; works under Python 2 and 3; see also:
@@ -73,7 +73,7 @@ class LoginView(views.APIView):
             }, status=status.HTTP_401_UNAUTHORIZED)
 
 
-class LogoutView(views.APIView):
+class LogoutRestView(views.APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     @csrf_exempt
