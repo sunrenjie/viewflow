@@ -1,0 +1,13 @@
+{
+  "project": {
+    "name": "project1"
+  },
+  "VMs": [
+    {
+      "name": "VM_1", "sockets": 2, "cores_per_socket": 4, "memory_GB": 8, "disks": "320GB", "nics": "two"
+    },
+    {
+      "name": "VM_2", "sockets": 1, "cores_per_socket": 1, "memory_GB": 4, "disks": "30GB", "nics": "one"
+    }
+  ]
+}

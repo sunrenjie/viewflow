@@ -1,6 +1,7 @@
 from copy import copy
 
 from django.conf.urls import url
+from django.core.exceptions import ViewDoesNotExist
 from django.core.urlresolvers import reverse
 
 from .. import Event, Task, mixins
@@ -47,8 +48,15 @@ class BaseStart(mixins.TaskDescriptionViewMixin,
 
     def urls(self, rest=False):
         urls = super(BaseStart, self).urls(rest=rest)
+        view = self.view
+        if rest:
+            rest_view = getattr(view, 'rest_version', None)
+            if not rest_view:
+                raise ViewDoesNotExist(
+                    'The rest version of the view "%s" is not available at its .rest_version attribute.' % str(view))
+            view = rest_view
         urls.append(
-            url(r'^{}/$'.format(self.name), self.view, {'flow_task': self}, name=self.name))
+            url(r'^{}/$'.format(self.name), view, {'flow_task': self}, name=self.name))
         return urls
 
 
