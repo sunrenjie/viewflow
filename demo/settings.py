@@ -33,9 +33,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'viewflow',
-    'demo.customnode',
-    'demo.helloworld',
-    'demo.shipment',
     'demo.orderit',
 )
 

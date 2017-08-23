@@ -33,4 +33,5 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Task
-        fields = ('id', 'owner', 'process', 'process_summary', 'task_name', 'task_description', 'created', 'comments')
+        fields = ('id', 'owner', 'process', 'process_summary', 'task_name', 'task_description', 'status', 'created',
+                  'started', 'finished', 'comments')

@@ -9,6 +9,7 @@ from django.utils.http import is_safe_url
 from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import views as rest_views
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 
@@ -83,6 +84,19 @@ class UpdateProcessView(FlowViewMixin, generic.UpdateView):
 
     def get_object(self, queryset=None):
         return self.activation.process
+
+    @classmethod
+    def as_view(cls, **initkwargs):
+        rest = initkwargs.pop('rest', False)
+        if rest:
+            return UpdateProcessRestView.as_view(**initkwargs)
+        else:
+            return super(UpdateProcessView, cls).as_view(**initkwargs)
+
+
+class UpdateProcessRestView(GenericAPIView, FlowViewMixin, generic.UpdateView):
+    def post(self, request, *args, **kwargs):
+        return super(UpdateProcessRestView, self).post(request, *args, **kwargs)
 
 
 class AssignTaskView(MessageUserMixin, generic.TemplateView):

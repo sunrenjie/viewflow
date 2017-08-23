@@ -7,13 +7,17 @@ from django.views import generic
 from django.shortcuts import render, redirect
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.views import APIView
 
+from viewflow.decorators import flow_view
 from viewflow.flow import flow_start_view
 from viewflow.flow.views import FlowViewMixin, get_next_task_url
 
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
+from rest_framework.exceptions import ValidationError
+from viewflow.serializers import TaskSerializer
 
 from .models import Project, Order, OrderVM
 
@@ -25,6 +29,13 @@ class StartViewRest(GenericAPIView):
 
     def __init__(self, **kwargs):
         super(StartViewRest, self).__init__(**kwargs)
+
+    def initial(self, request, *args, **kwargs):
+        # Because rest_framework.authentication.SessionAuthentication.authenticate() enforces CSRF check, which is
+        # against REST API spirit, here we do its authentication job in advance so that CSRF check is disabled.
+        user = request._request.user
+        request.user = request._user = user
+        return super(StartViewRest, self).initial(request, *args, **kwargs)
 
     def get_permissions(self):
         # incomplete implementation here; see also #post().
@@ -111,6 +122,84 @@ def start_view(request):
 start_view.rest_version = StartViewRest.as_view()
 
 
-class OrderCompleteProjectView(FlowViewMixin, generic.UpdateView):
-    def get_object(self):
+class OrderCompleteProjectRestView(GenericAPIView, FlowViewMixin, generic.UpdateView):
+    serializer_class = OrderSerializer
+    task_serializer_class = TaskSerializer
+
+    def __init__(self, **kwargs):
+        self.activation = None
+        super(OrderCompleteProjectRestView, self).__init__(**kwargs)
+
+    def get_object(self, queryset=None):
         return self.activation.process.order
+
+    def get_permissions(self):
+        # incomplete implementation here; see also #post().
+        perms = [permissions.IsAuthenticated(), ]
+        return perms
+
+    @csrf_exempt
+    def post(self, request, *args, **kwargs):
+        if not self.activation.prepare.can_proceed():
+            raise ValidationError('The task cannot be executed.')
+
+        if not self.activation.has_perm(request.user):
+            raise PermissionDenied
+
+        request.activation.prepare({'_viewflow_activation-started': datetime.now()}, user=request.user)
+
+        # save business logic object data
+        obj = self.get_object()
+        for attr, value in request.data.items():
+            if attr not in self.fields:
+                raise ValidationError("The attribute '%s' does not exist in the object model." % attr)
+            setattr(obj, attr, value)
+        obj.save()
+
+        self.activation.done()
+        msg = 'The task has been completed.'
+        if self.activation.process.finished:
+            msg += ' In addition, the process has been completed.'
+
+        return Response({'message': msg})
+
+    def get(self, request, *args, **kwargs):
+        obj = self.get_object()
+        obj_data = self.get_serializer(obj).data
+        task = self.activation.task
+        task_data = self.task_serializer_class(task).data
+        return Response({'object': obj_data, 'task': task_data})
+
+    def initial(self, request, *args, **kwargs):
+        # Because rest_framework.authentication.SessionAuthentication.authenticate() enforces CSRF check, which is
+        # against REST API spirit, here we do its authentication job in advance so that CSRF check is disabled.
+        user = request._request.user
+        request.user = request._user = user
+        return super(OrderCompleteProjectRestView, self).initial(request, *args, **kwargs)
+
+    @method_decorator(flow_view)
+    def dispatch(self, request, **kwargs):
+        self.activation = request.activation
+        return super(OrderCompleteProjectRestView, self).dispatch(request, **kwargs)
+
+    @classmethod
+    def as_view(cls, **initkwargs):
+        return super(OrderCompleteProjectRestView, cls).as_view(**initkwargs)
+
+
+class OrderCompleteProjectView(FlowViewMixin, generic.UpdateView):
+    REST_VERSION = OrderCompleteProjectRestView
+
+    def get_object(self, queryset=None):
+        return self.activation.process.order
+
+    def post(self, request, *args, **kwargs):
+        return super(OrderCompleteProjectView, self).post(request, *args, **kwargs)
+
+    @classmethod
+    def as_view(cls, **initkwargs):
+        rest = initkwargs.pop('rest', False)
+        if rest:
+            return cls.REST_VERSION.as_view(**initkwargs)
+        else:
+            return super(OrderCompleteProjectView, cls).as_view(**initkwargs)

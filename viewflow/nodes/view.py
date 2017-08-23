@@ -146,17 +146,16 @@ class BaseView(mixins.TaskDescriptionViewMixin,
 
         super(BaseView, self).__init__(view_or_class=view_or_class, **kwargs)
 
-    @property
-    def view(self):
-        if not self._view:
-            self._view = self._view_class.as_view(**self._view_args)
+    def view(self, rest=False):
+        # Don't reuse the view instance, as it is called with rest set to both True and False.
+        self._view = self._view_class.as_view(rest=rest, **self._view_args)
         return self._view
 
     def urls(self, rest=False):
         urls = super(BaseView, self).urls(rest=rest)
         urls.append(
             url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/$'.format(self.name),
-                self.view, {'flow_task': self}, name=self.name)
+                self.view(rest=rest), {'flow_task': self}, name=self.name)
         )
         return urls
 
