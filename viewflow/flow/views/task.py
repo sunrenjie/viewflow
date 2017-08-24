@@ -172,14 +172,25 @@ class AssignTaskView(MessageUserMixin, generic.TemplateView):
             return super(AssignTaskView, cls).as_view(**initkwargs)
 
 
-class AssignTaskRestView(MessageUserMixin, rest_views.APIView):
+class AssignTaskRestView(rest_views.APIView):
 
     def get_permissions(self):
         perms = [permissions.IsAuthenticated()]
         return perms
 
+    def initial(self, request, *args, **kwargs):
+        # Because rest_framework.authentication.SessionAuthentication.authenticate() enforces CSRF check, which is
+        # against REST API spirit, here we do its authentication job in advance so that CSRF check is disabled.
+        user = request._request.user
+        request.user = request._user = user
+        return super(AssignTaskRestView, self).initial(request, *args, **kwargs)
+
     @csrf_exempt
     def post(self, request, *args, **kwargs):
+        namespace = self.request.resolver_match.namespace
+        task_detail_url = self.activation.task.flow_task.get_task_url(
+            self.activation.task, url_type='detail', user=self.request.user, namespace=namespace)
+
         if not self.activation.assign.can_proceed():
             return Response({'message': "The task is in '%s' status and cannot be assigned." %
                                         self.activation.task.status}, status=status.HTTP_409_CONFLICT)
@@ -188,7 +199,10 @@ class AssignTaskRestView(MessageUserMixin, rest_views.APIView):
             return Response({'message': 'The task cannot be assigned to you.'}, status=status.HTTP_403_FORBIDDEN)
 
         self.activation.assign(self.request.user)
-        return Response({'messsage': 'Task has been assigned to you successfully.'})
+        return Response({'messsage': 'Task has been assigned to you successfully.',
+                         'link': {
+                             'detail': task_detail_url
+                         }})
 
     @method_decorator(flow_view)
     def dispatch(self, request, *args, **kwargs):

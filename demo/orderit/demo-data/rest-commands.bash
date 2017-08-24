@@ -14,3 +14,6 @@ http --timeout=3600 --print HhBb POST http://www.self-signed.cn:8001/api/v1/view
 
 # user amend order
 http --timeout=3600 --print HhBb POST http://www.self-signed.cn:8001/api/v1/viewflow/orderit/13/user_amend_order/33/ $x vms_amended:=true vms_request_for_review:=true malicious:=true
+
+# assign to myself
+http --timeout=3600 --print HhBb POST http://www.self-signed.cn:8001/api/v1/viewflow/orderit/15/admin_review_order/43/assign/ $x
