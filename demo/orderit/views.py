@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import django
 from django.core.exceptions import PermissionDenied
 from django.forms.models import modelform_factory, inlineformset_factory
 from django.utils.decorators import method_decorator
@@ -7,7 +8,6 @@ from django.views import generic
 from django.shortcuts import render, redirect
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.views import APIView
 
 from viewflow.decorators import flow_view
 from viewflow.flow import flow_start_view
@@ -152,14 +152,19 @@ class OrderCompleteProjectRestView(GenericAPIView, FlowViewMixin, generic.Update
         obj = self.get_object()
         for attr, value in request.data.items():
             if attr not in self.fields:
-                raise ValidationError("The attribute '%s' does not exist in the object model." % attr)
+                raise ValidationError("'%s' is not one of the attributes this task is designed to change. "
+                                      "Allowed attributes are %s." % (attr, str(self.fields)))
             setattr(obj, attr, value)
-        obj.save()
+        try:
+            obj.save()
+        except django.core.exceptions.ValidationError as e:
+            # Translate the django version of exception to a Rest Framework version, so that the Rest Framework may
+            # do the rest of work.
+            raise ValidationError({'messages': e.messages})
 
         self.activation.done()
-        msg = 'The task has been completed.'
-        if self.activation.process.finished:
-            msg += ' In addition, the process has been completed.'
+        msg = 'The task has been completed successfully.'
+        # Don't try to report that the process is finished or not here. Because that seems not working.
 
         return Response({'message': msg})
 
