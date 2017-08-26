@@ -25,7 +25,6 @@ class LoginRestView(views.APIView):
         data = json.loads(body_unicode)
         username = data.get('username', None)
         email = data.get('email', None)
-        phone = data.get('phone', None)
         password = data.get('password', None)
 
         # TODO how this shall be changed when the authentication policy change.
@@ -34,15 +33,6 @@ class LoginRestView(views.APIView):
             try:
                 user = get_object_or_404(auth_models.User, email=email)
                 username = user.username
-            except Http404 as e:
-                # to return HTTP_401_UNAUTHORIZED consistently
-                pass
-
-        # Try to translate phone number to username
-        if username is None and phone:
-            try:
-                profile = get_object_or_404(Profile.objects, phone=phone)
-                username = profile.user.username
             except Http404 as e:
                 # to return HTTP_401_UNAUTHORIZED consistently
                 pass

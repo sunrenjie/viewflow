@@ -1,20 +1,15 @@
-
-from django.contrib.auth import models as dj_models
-
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from . import models as models
 
+user_model = get_user_model()
+
 
 class AccountSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=False)
-    confirm_password = serializers.CharField(write_only=True, required=False)
-    phone = serializers.ReadOnlyField(source='profile.phone')
-    more_info = serializers.ReadOnlyField(source='profile.more_info')
-
     class Meta:
-        model = dj_models.User
-        fields = ('email', 'username', 'password', 'confirm_password', 'phone', 'more_info')
+        model = user_model
+        fields = ('email', 'username')
 
 
 class ProcessSerializer(serializers.ModelSerializer):

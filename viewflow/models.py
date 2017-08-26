@@ -10,13 +10,6 @@ from .fields import FlowReferenceField, TaskReferenceField, TokenField
 from .managers import ProcessManager, TaskManager, coerce_to_related_instance
 
 
-# Currently the Django default account system is used; define Profile model here to augment the User model.
-class Profile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, primary_key=True, related_name="profile_user")
-    phone = models.CharField(max_length=11, unique=True)
-    more_info = models.CharField(max_length=256, null=True, blank=True)
-
-
 class AbstractProcess(models.Model):
     """
     Base class for Process data object
