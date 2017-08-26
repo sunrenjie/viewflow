@@ -1,23 +1,18 @@
 # -*- coding:utf-8 -*-
 
-import os
-import re
 import json
-from datetime import datetime
 
+from django.core.exceptions import ViewDoesNotExist
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, models as auth_models
-from django.conf import settings
 from django.http.response import Http404
 from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import permissions, viewsets, status, views
-from rest_framework.parsers import FileUploadParser
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-
-from .models import Profile
-from .permissions import IsAccountOwner
 from .serializers import AccountSerializer
 
 
@@ -80,3 +75,29 @@ class LogoutRestView(views.APIView):
     def post(self, request, format=None):
         logout(request)
         return Response({}, status=status.HTTP_204_NO_CONTENT)
+
+
+class APIViewWithoutCSRFEnforcement(APIView):
+    # Because rest_framework.authentication.SessionAuthentication.authenticate() enforces CSRF check, which is
+    # against REST API spirit, here we do its authentication job in advance so that CSRF check is effectively worked
+    # around.
+    def initial(self, request, *args, **kwargs):
+        user = request._request.user
+        request.user = request._user = user
+        return super(APIViewWithoutCSRFEnforcement, self).initial(request, *args, **kwargs)
+
+
+class GenericAPIViewWithoutCSRFEnforcement(GenericAPIView, APIViewWithoutCSRFEnforcement):
+    pass
+
+
+def get_view_with_rest_awareness(view, rest, **view_initkwargs):
+    if rest:
+        rest_view = getattr(view, 'REST_VERSION', None)
+        if not rest_view:
+            raise ViewDoesNotExist(
+                'The rest version of the view "%s" is not available at its REST_VERSION attribute.' % str(view))
+        view = rest_view
+    if isinstance(view, type) and hasattr(view, 'as_view'):
+        view = view.as_view(**view_initkwargs)
+    return view

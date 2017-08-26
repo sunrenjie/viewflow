@@ -1,9 +1,9 @@
 from copy import copy
 
 from django.conf.urls import url
-from django.core.exceptions import ViewDoesNotExist
 from django.core.urlresolvers import reverse
 
+from .. import rest_views
 from .. import Event, Task, mixins
 from ..activation import StartActivation, ViewActivation, STATUS
 
@@ -42,19 +42,13 @@ class BaseStart(mixins.TaskDescriptionViewMixin,
             if not self._view_class:
                 return self.start_view_class.as_view()
             else:
-                self._view = self._view_class.as_view(**self._view_args)
+                self._view = self._view_class
                 return self._view
         return self._view
 
     def urls(self, rest=False):
         urls = super(BaseStart, self).urls(rest=rest)
-        view = self.view
-        if rest:
-            rest_view = getattr(view, 'rest_version', None)
-            if not rest_view:
-                raise ViewDoesNotExist(
-                    'The rest version of the view "%s" is not available at its .rest_version attribute.' % str(view))
-            view = rest_view
+        view = rest_views.get_view_with_rest_awareness(self.view, rest, **self._view_args)
         urls.append(
             url(r'^{}/$'.format(self.name), view, {'flow_task': self}, name=self.name))
         return urls
@@ -146,16 +140,17 @@ class BaseView(mixins.TaskDescriptionViewMixin,
 
         super(BaseView, self).__init__(view_or_class=view_or_class, **kwargs)
 
-    def view(self, rest=False):
-        # Don't reuse the view instance, as it is called with rest set to both True and False.
-        self._view = self._view_class.as_view(rest=rest, **self._view_args)
+    @property
+    def view(self):
+        self._view = self._view_class
         return self._view
 
     def urls(self, rest=False):
         urls = super(BaseView, self).urls(rest=rest)
+        view = rest_views.get_view_with_rest_awareness(self.view, rest, **self._view_args)
         urls.append(
             url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/$'.format(self.name),
-                self.view(rest=rest), {'flow_task': self}, name=self.name)
+                view, {'flow_task': self}, name=self.name)
         )
         return urls
 
@@ -186,18 +181,22 @@ class View(mixins.PermissionMixin, BaseView):
             result._owner = owner_kwargs
         return result
 
-    def assign_view(self, rest=False):
-        return self._assign_view if self._assign_view else self.assign_view_class.as_view(rest=rest)
+    @property
+    def assign_view(self):
+        return self._assign_view if self._assign_view else self.assign_view_class
 
-    def unassign_view(self, rest=False):
-        return self._unassign_view if self._unassign_view else self.unassign_view_class.as_view()
+    @property
+    def unassign_view(self):
+        return self._unassign_view if self._unassign_view else self.unassign_view_class
 
     def urls(self, rest=False):
         urls = super(View, self).urls(rest=rest)
         urls.append(url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/assign/$'.format(self.name),
-                    self.assign_view(rest=rest), {'flow_task': self}, name="{}__assign".format(self.name)))
+                        rest_views.get_view_with_rest_awareness(self.assign_view, rest),
+                        {'flow_task': self}, name="{}__assign".format(self.name)))
         urls.append(url(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/unassign/$'.format(self.name),
-                    self.unassign_view(rest=rest), {'flow_task': self}, name="{}__unassign".format(self.name)))
+                        rest_views.get_view_with_rest_awareness(self.unassign_view, rest),
+                        {'flow_task': self}, name="{}__unassign".format(self.name)))
         return urls
 
     def get_task_url(self, task, url_type='guess', namespace='', **kwargs):

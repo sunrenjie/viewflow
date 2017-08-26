@@ -17,6 +17,8 @@ from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from rest_framework.exceptions import ValidationError
+
+from viewflow.rest_views import GenericAPIViewWithoutCSRFEnforcement
 from viewflow.serializers import TaskSerializer
 
 from .models import Project, Order, OrderVM
@@ -24,7 +26,7 @@ from .models import Project, Order, OrderVM
 from .serializers import OrderSerializer
 
 
-class StartViewRest(GenericAPIView):
+class StartViewRest(GenericAPIViewWithoutCSRFEnforcement):
     serializer_class = OrderSerializer
 
     def __init__(self, **kwargs):
@@ -45,10 +47,6 @@ class StartViewRest(GenericAPIView):
     def perform_create(self, serializer):
         # Injecting owner info into validated data.
         return serializer.save(owner=self.request.user)
-
-    @classmethod
-    def as_view(cls, **initkwargs):
-        return super(StartViewRest, cls).as_view(**initkwargs)
 
     @method_decorator(flow_start_view)
     @csrf_exempt
@@ -119,10 +117,11 @@ def start_view(request):
         'formset': formset,
     })
 
-start_view.rest_version = StartViewRest.as_view()
+start_view.REST_VERSION = StartViewRest
 
 
-class OrderCompleteProjectRestView(GenericAPIView, FlowViewMixin, generic.UpdateView):
+class OrderCompleteProjectRestView(GenericAPIViewWithoutCSRFEnforcement, FlowViewMixin):
+    fields = None
     serializer_class = OrderSerializer
     task_serializer_class = TaskSerializer
 
@@ -175,13 +174,6 @@ class OrderCompleteProjectRestView(GenericAPIView, FlowViewMixin, generic.Update
         task_data = self.task_serializer_class(task).data
         return Response({'object': obj_data, 'task': task_data})
 
-    def initial(self, request, *args, **kwargs):
-        # Because rest_framework.authentication.SessionAuthentication.authenticate() enforces CSRF check, which is
-        # against REST API spirit, here we do its authentication job in advance so that CSRF check is disabled.
-        user = request._request.user
-        request.user = request._user = user
-        return super(OrderCompleteProjectRestView, self).initial(request, *args, **kwargs)
-
     @method_decorator(flow_view)
     def dispatch(self, request, **kwargs):
         self.activation = request.activation
@@ -197,14 +189,3 @@ class OrderCompleteProjectView(FlowViewMixin, generic.UpdateView):
 
     def get_object(self, queryset=None):
         return self.activation.process.order
-
-    def post(self, request, *args, **kwargs):
-        return super(OrderCompleteProjectView, self).post(request, *args, **kwargs)
-
-    @classmethod
-    def as_view(cls, **initkwargs):
-        rest = initkwargs.pop('rest', False)
-        if rest:
-            return cls.REST_VERSION.as_view(**initkwargs)
-        else:
-            return super(OrderCompleteProjectView, cls).as_view(**initkwargs)
