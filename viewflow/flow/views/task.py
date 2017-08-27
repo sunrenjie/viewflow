@@ -6,12 +6,8 @@ from django.shortcuts import redirect
 from django.views import generic
 from django.utils.decorators import method_decorator
 from django.utils.http import is_safe_url
-from django.views.decorators.csrf import csrf_exempt
 
-from rest_framework.response import Response
-from rest_framework import status, permissions
-
-from viewflow.rest_views import APIViewWithoutCSRFEnforcement, UpdateFieldsRestViewMixin
+from viewflow.rest_views import FinishAssignedTaskWithFieldsRestView, AssignTaskRestView, UnassignTaskRestView
 from ...decorators import flow_view
 from .actions import BaseTaskActionView
 from .mixins import MessageUserMixin
@@ -70,19 +66,9 @@ class FlowViewMixin(MessageUserMixin, BaseFlowViewMixin):
         self.activation_done(*args, **kwargs)
         return HttpResponseRedirect(self.get_success_url())
 
-# FIXME The rest views UpdateProcessRestView and AssignTaskRestView cannot be moved out of this file.
-# They are referenced by their 'traditional' counterparts as "REST_VERSION", yet they need FlowViewMixin as base class.
-# Such cyclic reference can only be resolved by a larger scale of refactoring; we'd hate to do that.
-
-
-class UpdateProcessRestView(UpdateFieldsRestViewMixin):
-    def post(self, request, *args, **kwargs):
-        obj = super(UpdateProcessRestView, self).post(request, *args, **kwargs)
-        return Response({'message': 'A new process (id=%s) is started.' % str(obj.id)})
-
 
 class UpdateProcessView(FlowViewMixin, generic.UpdateView):
-    REST_VERSION = UpdateProcessRestView
+    REST_VERSION = FinishAssignedTaskWithFieldsRestView
 
     def __init__(self, *args, **kwargs):
         super(UpdateProcessView, self).__init__(*args, **kwargs)
@@ -95,41 +81,6 @@ class UpdateProcessView(FlowViewMixin, generic.UpdateView):
 
     def get_object(self, queryset=None):
         return self.activation.process
-
-
-class AssignTaskRestView(APIViewWithoutCSRFEnforcement):
-
-    def get_permissions(self):
-        perms = [permissions.IsAuthenticated()]
-        return perms
-
-    @csrf_exempt
-    def post(self, request, *args, **kwargs):
-        namespace = self.request.resolver_match.namespace
-        task_detail_url = self.activation.task.flow_task.get_task_url(
-            self.activation.task, url_type='detail', user=self.request.user, namespace=namespace)
-
-        if not self.activation.assign.can_proceed():
-            return Response({'message': "The task is in '%s' status and cannot be assigned." %
-                                        self.activation.task.status}, status=status.HTTP_409_CONFLICT)
-
-        if not self.activation.flow_task.can_assign(request.user, self.activation.task):
-            return Response({'message': 'The task cannot be assigned to you.'}, status=status.HTTP_403_FORBIDDEN)
-
-        self.activation.assign(self.request.user)
-        return Response({'messsage': 'Task has been assigned to you successfully.',
-                         'link': {
-                             'detail': task_detail_url
-                         }})
-
-    @method_decorator(flow_view)
-    def dispatch(self, request, *args, **kwargs):
-        self.activation = request.activation
-        # The calls to can_proceed() and can_assign() have to be performed in post(), since at that point, we are
-        # called by rest_framework.views.dispatch(), where proper work is done such that we could return a
-        # rest_framework.response.Response object. Making the calls here will result in error.
-
-        return super(AssignTaskRestView, self).dispatch(request, *args, **kwargs)
 
 
 class AssignTaskView(MessageUserMixin, generic.TemplateView):
@@ -197,10 +148,6 @@ class AssignTaskView(MessageUserMixin, generic.TemplateView):
             raise PermissionDenied
 
         return super(AssignTaskView, self).dispatch(request, *args, **kwargs)
-
-
-class UnassignTaskRestView(APIViewWithoutCSRFEnforcement):
-    pass  # TODO implement it.
 
 
 class UnassignTaskView(BaseTaskActionView):

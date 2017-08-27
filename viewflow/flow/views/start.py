@@ -3,9 +3,8 @@ from django.http import HttpResponseRedirect
 from django.views import generic
 from django.utils.decorators import method_decorator
 
-from rest_framework.response import Response
 
-from ...rest_views import UpdateFieldsRestViewMixin
+from ...rest_views import CreateProcessRestView
 from ...decorators import flow_start_view
 from .mixins import MessageUserMixin
 from .utils import get_next_task_url
@@ -53,12 +52,6 @@ class StartFlowMixin(MessageUserMixin, BaseStartFlowMixin):
         super(StartFlowMixin, self).form_valid(*args, **kwargs)
         self.activation_done(*args, **kwargs)
         return HttpResponseRedirect(self.get_success_url())
-
-
-class CreateProcessRestView(UpdateFieldsRestViewMixin):
-    def post(self, request, *args, **kwargs):
-        obj = super(CreateProcessRestView, self).post(request, *args, **kwargs)
-        return Response({'message': 'A new process (id=%s) is started.' % str(obj.id)})
 
 
 class CreateProcessView(StartFlowMixin, generic.UpdateView):

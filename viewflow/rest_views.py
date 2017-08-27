@@ -147,12 +147,6 @@ class UpdateFieldsRestViewMixin(GenericAPIViewWithoutCSRFEnforcement):
         perms = [permissions.IsAuthenticated(), ]
         return perms
 
-    @method_decorator(flow_view)
-    def dispatch(self, request, **kwargs):
-        """Check user permissions, and prepare flow to execution."""
-        self.activation = request.activation
-        return super(UpdateFieldsRestViewMixin, self).dispatch(request, **kwargs)
-
     @property
     def model(self):
         return self.activation.flow_class.process_class
@@ -173,9 +167,21 @@ class UpdateFieldsRestViewMixin(GenericAPIViewWithoutCSRFEnforcement):
 
     def post(self, request, *args, **kwargs):
         if not self.activation.has_perm(request.user):
+            # TODO More precise diagnostics info given to the user.
+            # If the task is not yet assigned (status is NEW), we shall explicitly tell the user to assign it first.
+            # If the task is creating a new process, but the user simply has no permission to do so, we shall also be
+            # explicit about this.
             raise PermissionDenied("The user has not permission to perform the task.")
-        if request.activation.status == STATUS.DONE:
-            raise PermissionDenied("The task is already finished.")
+
+        # Errors going into the status machine can be hard to understand. Try to intercept.
+        # Creating-new Tasks have NEW status.
+        s = request.activation.status
+        if s not in (STATUS.ASSIGNED, STATUS.NEW):
+            msg_dict = {
+                STATUS.DONE: 'The task is already finished.'
+            }
+            msg = msg_dict.get(s, "The task is in '%s' status, therefore cannot be performed." % s)
+            raise PermissionDenied(msg)
 
         request.activation.prepare({'_viewflow_activation-started': datetime.now()}, user=request.user)
 
@@ -196,6 +202,68 @@ class UpdateFieldsRestViewMixin(GenericAPIViewWithoutCSRFEnforcement):
 
         # Derived-class shall override this method by getting this object and construct its own response message.
         return obj
+
+
+class FinishAssignedTaskWithFieldsRestView(UpdateFieldsRestViewMixin):
+    @method_decorator(flow_view)
+    def dispatch(self, request, **kwargs):
+        """Check user permissions, and prepare flow to execution."""
+        self.activation = request.activation
+        return super(UpdateFieldsRestViewMixin, self).dispatch(request, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        super(FinishAssignedTaskWithFieldsRestView, self).post(request, *args, **kwargs)
+        return Response({'message': 'The task has been completed successfully.'})
+
+
+class CreateProcessRestView(UpdateFieldsRestViewMixin):
+    @method_decorator(flow_start_view)
+    def dispatch(self, request, **kwargs):
+        """Check user permissions, and prepare flow to execution."""
+        self.activation = request.activation
+        return super(UpdateFieldsRestViewMixin, self).dispatch(request, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        obj = super(CreateProcessRestView, self).post(request, *args, **kwargs)
+        return Response({'message': 'A new process (id=%s) is started.' % str(obj.id)})
+
+
+class AssignTaskRestView(APIViewWithoutCSRFEnforcement):
+    def get_permissions(self):
+        perms = [permissions.IsAuthenticated()]
+        return perms
+
+    @csrf_exempt
+    def post(self, request, *args, **kwargs):
+        namespace = self.request.resolver_match.namespace
+        task_detail_url = self.activation.task.flow_task.get_task_url(
+            self.activation.task, url_type='detail', user=self.request.user, namespace=namespace)
+
+        if not self.activation.assign.can_proceed():
+            return Response({'message': "The task is in '%s' status and cannot be assigned." %
+                                        self.activation.task.status}, status=status.HTTP_409_CONFLICT)
+
+        if not self.activation.flow_task.can_assign(request.user, self.activation.task):
+            return Response({'message': 'The task cannot be assigned to you.'}, status=status.HTTP_403_FORBIDDEN)
+
+        self.activation.assign(self.request.user)
+        return Response({'messsage': 'Task has been assigned to you successfully.',
+                         'link': {
+                             'detail': task_detail_url
+                         }})
+
+    @method_decorator(flow_view)
+    def dispatch(self, request, *args, **kwargs):
+        self.activation = request.activation
+        # The calls to can_proceed() and can_assign() have to be performed in post(), since at that point, we are
+        # called by rest_framework.views.dispatch(), where proper work is done such that we could return a
+        # rest_framework.response.Response object. Making the calls here will result in error.
+
+        return super(AssignTaskRestView, self).dispatch(request, *args, **kwargs)
+
+
+class UnassignTaskRestView(APIViewWithoutCSRFEnforcement):
+    pass  # TODO implement it.
 
 
 def get_view_with_rest_awareness(view, rest, **view_initkwargs):
