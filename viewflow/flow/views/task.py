@@ -8,11 +8,10 @@ from django.utils.decorators import method_decorator
 from django.utils.http import is_safe_url
 from django.views.decorators.csrf import csrf_exempt
 
-from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 
-from viewflow.rest_views import APIViewWithoutCSRFEnforcement, GenericAPIViewWithoutCSRFEnforcement
+from viewflow.rest_views import APIViewWithoutCSRFEnforcement, UpdateFieldsRestViewMixin
 from ...decorators import flow_view
 from .actions import BaseTaskActionView
 from .mixins import MessageUserMixin
@@ -76,10 +75,10 @@ class FlowViewMixin(MessageUserMixin, BaseFlowViewMixin):
 # Such cyclic reference can only be resolved by a larger scale of refactoring; we'd hate to do that.
 
 
-class UpdateProcessRestView(GenericAPIViewWithoutCSRFEnforcement, FlowViewMixin, generic.UpdateView):
-    # TODO used in helloworld demo app; implement it.
+class UpdateProcessRestView(UpdateFieldsRestViewMixin):
     def post(self, request, *args, **kwargs):
-        raise NotImplementedError
+        obj = super(UpdateProcessRestView, self).post(request, *args, **kwargs)
+        return Response({'message': 'A new process (id=%s) is started.' % str(obj.id)})
 
 
 class UpdateProcessView(FlowViewMixin, generic.UpdateView):

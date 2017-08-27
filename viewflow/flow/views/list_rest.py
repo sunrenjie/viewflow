@@ -4,6 +4,7 @@ from rest_framework import views as rest_views
 from rest_framework.response import Response
 from rest_framework import permissions
 
+from viewflow.rest_views import APIViewWithoutCSRFEnforcement
 from .list import TaskFilter, ProcessFilter
 
 from ... import serializers
@@ -16,7 +17,7 @@ from .mixins import (
 )
 
 
-class AllProcessListRestView(LoginRequiredMixin, FlowListMixin, generic.ListView):
+class AllProcessListRestView(LoginRequiredMixin, FlowListMixin, APIViewWithoutCSRFEnforcement):
 
     """All process instances list available for current user."""
 
@@ -30,7 +31,7 @@ class AllProcessListRestView(LoginRequiredMixin, FlowListMixin, generic.ListView
             .order_by('-created')
 
 
-class AllTaskListRestView(FlowListMixin, rest_views.APIView):
+class AllTaskListRestView(FlowListMixin, APIViewWithoutCSRFEnforcement):
 
     def __init__(self, *args, **kwargs):
         self._filter = None
@@ -54,7 +55,7 @@ class AllTaskListRestView(FlowListMixin, rest_views.APIView):
         return models.Task.objects.inbox(self.flows, user).order_by('-created')
 
 
-class AllQueueListRestView(FlowListMixin, rest_views.APIView):
+class AllQueueListRestView(FlowListMixin, APIViewWithoutCSRFEnforcement):
 
     def __init__(self, *args, **kwargs):
         self._filter = None
@@ -77,7 +78,7 @@ class AllQueueListRestView(FlowListMixin, rest_views.APIView):
         return Response([serializers.TaskSerializer(task).data for task in tasks])
 
 
-class AllArchiveListRestView(LoginRequiredMixin, FlowListMixin, rest_views.APIView):
+class AllArchiveListRestView(LoginRequiredMixin, FlowListMixin, APIViewWithoutCSRFEnforcement):
 
     """All tasks from all processes assigned to current user."""
 
@@ -89,7 +90,7 @@ class AllArchiveListRestView(LoginRequiredMixin, FlowListMixin, rest_views.APIVi
         return Response([serializers.TaskSerializer(task).data for task in tasks])
 
 
-class ProcessListRestView(FlowViewPermissionMixin, rest_views.APIView):
+class ProcessListRestView(FlowViewPermissionMixin, APIViewWithoutCSRFEnforcement):
 
     def __init__(self, **kwargs):
         self._filter = None
@@ -114,7 +115,7 @@ class ProcessListRestView(FlowViewPermissionMixin, rest_views.APIView):
         return Response([serializers.ProcessSerializer(p).data for p in processes])
 
 
-class TaskListRestView(FlowViewPermissionMixin, rest_views.APIView):
+class TaskListRestView(FlowViewPermissionMixin, APIViewWithoutCSRFEnforcement):
 
     def get_queryset(self):
         return self.flow_class.task_class.objects \
@@ -128,7 +129,7 @@ class TaskListRestView(FlowViewPermissionMixin, rest_views.APIView):
         return Response([serializers.TaskSerializer(task).data for task in tasks])
 
 
-class QueueListRestView(FlowViewPermissionMixin, rest_views.APIView):
+class QueueListRestView(FlowViewPermissionMixin, APIViewWithoutCSRFEnforcement):
 
     def get_queryset(self):
         queryset = self.flow_class.task_class.objects.user_queue(self.request.user, flow_class=self.flow_class) \
@@ -141,7 +142,7 @@ class QueueListRestView(FlowViewPermissionMixin, rest_views.APIView):
         return Response([serializers.TaskSerializer(task).data for task in tasks])
 
 
-class ArchiveListRestView(FlowViewPermissionMixin, rest_views.APIView):
+class ArchiveListRestView(FlowViewPermissionMixin, APIViewWithoutCSRFEnforcement):
 
     """All tasks from all processes assigned to current user."""
 
