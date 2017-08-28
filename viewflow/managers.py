@@ -144,9 +144,6 @@ class TaskQuerySet(QuerySet):
         queryset = self.filter(flow_task_type='HUMAN')
 
         if flow_class is not None:
-            if not isinstance(flow_class, ClassValueWrapper):
-                flow_class = ClassValueWrapper(flow_class)
-
             queryset = queryset.filter(process__flow_class=flow_class)
 
         if not user.is_superuser:
