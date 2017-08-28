@@ -165,13 +165,16 @@ class UpdateFieldsRestViewMixin(GenericAPIViewWithoutCSRFEnforcement):
         return self.activation.process
 
     def get(self, request, *args, **kwargs):
-        if not self.serializer_class:
-            raise PermissionDenied('No serializer class is defined for this task.')
-        obj = self.get_object()
-        obj_data = self.get_serializer(obj).data
+        """Get the task details despite the class name."""
         task = self.activation.task
-        task_data = self.task_serializer_class(task).data
-        return Response({'object': obj_data, 'task': task_data})
+        task_data = self.task_serializer_class(task, request=request).data
+        data = {'task': task_data}
+
+        if self.serializer_class:
+            obj = self.get_object()
+            obj_data = self.serializer_class(obj).data
+            data['object'] = obj_data
+        return Response(data)
 
     def post(self, request, *args, **kwargs):
         if not self.activation.has_perm(request.user):

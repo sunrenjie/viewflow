@@ -34,10 +34,14 @@ urlpatterns = [
     url('^api/v1/auth/logout/$', LogoutRestView.as_view(), name='rest_logout'),
     url('^api/v1/viewflow/tasks/$', list_rest.AllTaskListRestView.as_view(ns_map=flows), name='rest_viewflow_tasks'),
     url('^api/v1/viewflow/queue/$', list_rest.AllQueueListRestView.as_view(ns_map=flows), name='rest_viewflow_queue'),
-    url('^api/v1/viewflow/helloworld/', include('demo.helloworld.urls_rest', namespace='rest_app_helloworld')),
-    url('^api/v1/viewflow/shipment/', include('demo.shipment.urls_rest', namespace='rest_app_shipment')),
-    url('^api/v1/viewflow/split/', include('demo.customnode.urls_rest', namespace='rest_app_split')),
-    url('^api/v1/viewflow/orderit/', include('demo.orderit.urls_rest', namespace='rest_app_orderit')),
+
+    # Note that the namespace for the per-app REST API URL shall be of the format 'rest_viewflow_app_xxx', where 'xxx'
+    # is the name of the app. It is critical for reversing from view name to URL. See also
+    # viewflow.models.AbstractTask.get_url().
+    url('^api/v1/viewflow/helloworld/', include('demo.helloworld.urls_rest', namespace='rest_viewflow_app_helloworld')),
+    url('^api/v1/viewflow/shipment/', include('demo.shipment.urls_rest', namespace='rest_viewflow_app_shipment')),
+    url('^api/v1/viewflow/split/', include('demo.customnode.urls_rest', namespace='rest_viewflow_app_split')),
+    url('^api/v1/viewflow/orderit/', include('demo.orderit.urls_rest', namespace='rest_viewflow_app_orderit')),
     url(r'^tasks/$', viewflow.AllTaskListView.as_view(ns_map=flows), name="tasks"),
     url(r'^queue/$', viewflow.AllQueueListView.as_view(ns_map=flows), name="queue"),
 

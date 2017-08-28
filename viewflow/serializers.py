@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.urls import NoReverseMatch
 from rest_framework import serializers
 
 from . import models as models
@@ -30,3 +31,18 @@ class TaskSerializer(serializers.ModelSerializer):
         model = models.Task
         fields = ('id', 'owner', 'process', 'process_summary', 'task_name', 'task_description', 'status', 'created',
                   'started', 'finished', 'comments')
+
+    def __init__(self, *args, **kwargs):
+        request = kwargs.pop('request', None)
+        self.server_prefix = request.build_absolute_uri('/')[:-1].strip("/") if request else ''
+        super(TaskSerializer, self).__init__(*args, **kwargs)
+
+    def to_representation(self, instance):
+        data = super(TaskSerializer, self).to_representation(instance)
+        links = {}
+        for t in ['', 'assign']:
+            url = instance.get_url(url_type=t)
+            if url:
+                links[t] = self.server_prefix + url
+        data['links'] = links
+        return data

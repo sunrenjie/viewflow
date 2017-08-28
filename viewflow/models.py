@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db import models
 from django.template import Template, Context
 
@@ -156,6 +156,17 @@ class AbstractTask(models.Model):
             db_instance = self.__class__._default_manager.filter(pk=self.pk).get()
             for field in self._meta.concrete_fields:
                 setattr(self, field.attname, getattr(db_instance, field.attname))
+
+    def get_url(self, url_type=None):
+        # Ideas copied from get_task_url() methods.
+        namespace = 'rest_viewflow_app_' + self.flow_process._meta.app_label
+        view_name = '{}:{}'.format(namespace, self.flow_task.name)
+        if url_type:
+            view_name += '__' + url_type
+        try:
+            return reverse(view_name, args=[self.process_id, self.pk])
+        except NoReverseMatch:  # certain non-HUMAN tasks do not expose URLs.
+            return None
 
     class Meta:
         abstract = True

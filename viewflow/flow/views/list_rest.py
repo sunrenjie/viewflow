@@ -43,7 +43,7 @@ class AllTaskListRestView(FlowListMixin, APIViewWithoutCSRFEnforcement):
 
     def get(self, request, *args, **kwargs):
         tasks = list(self.filter.qs)
-        return Response([serializers.TaskSerializer(task).data for task in tasks])
+        return Response([serializers.TaskSerializer(task, request=request).data for task in tasks])
 
     @property
     def filter(self):
@@ -75,7 +75,7 @@ class AllQueueListRestView(FlowListMixin, APIViewWithoutCSRFEnforcement):
 
     def get(self, request, *args, **kwargs):
         tasks = list(self.get_queryset())
-        return Response([serializers.TaskSerializer(task).data for task in tasks])
+        return Response([serializers.TaskSerializer(task, request=request).data for task in tasks])
 
 
 class AllArchiveListRestView(LoginRequiredMixin, FlowListMixin, APIViewWithoutCSRFEnforcement):
@@ -87,7 +87,7 @@ class AllArchiveListRestView(LoginRequiredMixin, FlowListMixin, APIViewWithoutCS
 
     def get(self, request, *args, **kwargs):
         tasks = list(self.get_queryset())
-        return Response([serializers.TaskSerializer(task).data for task in tasks])
+        return Response([serializers.TaskSerializer(task, request=request).data for task in tasks])
 
 
 class ProcessListRestView(FlowViewPermissionMixin, APIViewWithoutCSRFEnforcement):
@@ -126,7 +126,7 @@ class TaskListRestView(FlowViewPermissionMixin, APIViewWithoutCSRFEnforcement):
 
     def get(self, request, *args, **kwargs):
         tasks = [t for t in self.get_queryset()]
-        return Response([serializers.TaskSerializer(task).data for task in tasks])
+        return Response([serializers.TaskSerializer(task, request=request).data for task in tasks])
 
 
 class QueueListRestView(FlowViewPermissionMixin, APIViewWithoutCSRFEnforcement):
@@ -139,7 +139,7 @@ class QueueListRestView(FlowViewPermissionMixin, APIViewWithoutCSRFEnforcement):
 
     def get(self, request, *args, **kwargs):
         tasks = [t for t in self.get_queryset()]
-        return Response([serializers.TaskSerializer(task).data for task in tasks])
+        return Response([serializers.TaskSerializer(task, request=request).data for task in tasks])
 
 
 class ArchiveListRestView(FlowViewPermissionMixin, APIViewWithoutCSRFEnforcement):
@@ -156,4 +156,4 @@ class ArchiveListRestView(FlowViewPermissionMixin, APIViewWithoutCSRFEnforcement
 
     def get(self, request, *args, **kwargs):
         tasks = [t for t in self.get_queryset()]
-        return Response([serializers.TaskSerializer(task).data for task in tasks])
+        return Response([serializers.TaskSerializer(task, request=request).data for task in tasks])
