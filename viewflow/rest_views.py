@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 
+import six
 import json
 from datetime import datetime
 
@@ -9,15 +10,17 @@ from django.contrib.auth import authenticate, login, logout, models as auth_mode
 from django.http.response import Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import ugettext_lazy as _
 
-from rest_framework import permissions, viewsets, status, views
+from rest_framework import permissions, status, views, exceptions
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
+from rest_framework.compat import set_rollback
 
-from viewflow import STATUS
-from viewflow.decorators import flow_view, flow_start_view
+from .activation import STATUS
+from .decorators import flow_view, flow_start_view
 from .serializers import AccountSerializer, TaskSerializer, ProcessSerializer
 
 
@@ -292,3 +295,44 @@ def get_view_with_rest_awareness(view, rest, **view_initkwargs):
     if isinstance(view, type) and hasattr(view, 'as_view'):
         view = view.as_view(**view_initkwargs)
     return view
+
+
+def exception_handler(exc, context):
+    """
+    Returns the response that should be used for any given exception.
+
+    By default we handle the REST framework `APIException`, and also
+    Django's built-in `Http404` and `PermissionDenied` exceptions.
+
+    Any unhandled exceptions may return `None`, which will cause a 500 error
+    to be raised.
+    """
+    if isinstance(exc, exceptions.APIException):
+        headers = {}
+        if getattr(exc, 'auth_header', None):
+            headers['WWW-Authenticate'] = exc.auth_header
+        if getattr(exc, 'wait', None):
+            headers['Retry-After'] = '%d' % exc.wait
+
+        if isinstance(exc.detail, (list, dict)):
+            data = exc.detail
+        else:
+            data = {'message': exc.detail}
+
+        set_rollback()
+        return Response(data, status=exc.status_code, headers=headers)
+
+    elif isinstance(exc, Http404):
+        msg = _('Not found.')
+        data = {'message': six.text_type(msg)}
+
+        set_rollback()
+        return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+    elif isinstance(exc, PermissionDenied):
+        data = {'message': six.text_type(_('Permission denied: %s') % exc.message)}
+
+        set_rollback()
+        return Response(data, status=status.HTTP_403_FORBIDDEN)
+
+    return None

@@ -151,6 +151,9 @@ BROKER_URL = 'django://'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'viewflow.rest_views.exception_handler',
+}
 
 try:
     from demo.local_settings import *  # NOQA
