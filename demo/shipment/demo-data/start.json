@@ -1,0 +1,22 @@
+{
+  "shipment_no": "abc-123",
+  "first_name": "Tom",
+  "last_name": "Sayer",
+  "email": "r@g.cn",
+  "phone": "123-456-UNIX",
+  "address": "Some Address #1",
+  "zipcode": "430000",
+  "city": "Some City",
+  "state": "Some State",
+  "country": "Some Country",
+  "shipmentitem_set": [
+    {
+      "name": "item1",
+      "quantity": 3
+    },
+    {
+      "name": "item2",
+      "quantity": 5
+    }
+  ]
+}

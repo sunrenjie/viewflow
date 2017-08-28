@@ -3,14 +3,12 @@ from django.forms.models import modelform_factory, inlineformset_factory
 from django.views import generic
 from django.shortcuts import render, redirect
 from django.utils.translation import ugettext_lazy as _
-from django.views.decorators.csrf import csrf_exempt
 
 from viewflow.flow import flow_start_view
 from viewflow.flow.views import FlowViewMixin, get_next_task_url
 
-from rest_framework.response import Response
 
-from viewflow.rest_views import UpdateFieldsRestViewMixin, StartViewRest
+from viewflow.rest_views import StartViewRest, FinishAssignedTaskWithFieldsRestView
 
 from .models import Project, Order, OrderVM
 
@@ -19,6 +17,7 @@ from .serializers import OrderSerializer
 
 class OrderItStartViewRest(StartViewRest):
     serializer_class = OrderSerializer
+    object_field_name = 'order'
 
 
 @flow_start_view
@@ -64,14 +63,8 @@ def start_view(request):
 start_view.REST_VERSION = OrderItStartViewRest
 
 
-class OrderCompleteProjectRestView(UpdateFieldsRestViewMixin):
+class OrderCompleteProjectRestView(FinishAssignedTaskWithFieldsRestView):
     serializer_class = OrderSerializer
-
-    @csrf_exempt
-    def post(self, request, *args, **kwargs):
-        super(OrderCompleteProjectRestView, self).post(request, *args, **kwargs)
-        msg = 'The task has been completed successfully.'
-        return Response({'message': msg})
 
     def get_object(self, queryset=None):
         return self.activation.process.order

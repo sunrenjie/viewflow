@@ -3,8 +3,7 @@
 import json
 from datetime import datetime
 
-import django
-from django.core.exceptions import ViewDoesNotExist, PermissionDenied
+from django.core.exceptions import ViewDoesNotExist, PermissionDenied, ImproperlyConfigured
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, models as auth_models
 from django.http.response import Http404
@@ -19,7 +18,7 @@ from rest_framework.exceptions import ValidationError
 
 from viewflow import STATUS
 from viewflow.decorators import flow_view, flow_start_view
-from .serializers import AccountSerializer, TaskSerializer
+from .serializers import AccountSerializer, TaskSerializer, ProcessSerializer
 
 
 class LoginRestView(views.APIView):
@@ -88,10 +87,16 @@ class GenericAPIViewWithoutCSRFEnforcement(GenericAPIView, APIViewWithoutCSRFEnf
 
 
 class StartViewRest(GenericAPIViewWithoutCSRFEnforcement):
+    process_serializer_class = ProcessSerializer
+
+    # Derived class shall define the two.
     serializer_class = None
+    object_field_name = None
 
     def __init__(self, **kwargs):
         super(StartViewRest, self).__init__(**kwargs)
+        if not self.object_field_name:
+            raise ImproperlyConfigured('The class "%s" shall define object_field_name.' % self.__class__.__name__)
 
     def get_permissions(self):
         # incomplete implementation here; see also #post().
@@ -124,14 +129,21 @@ class StartViewRest(GenericAPIViewWithoutCSRFEnforcement):
         # serializer (for returning validated data) and created order object (for assigning to the process).
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        order = self.perform_create(serializer)
+        obj = self.perform_create(serializer)
 
-        request.process.order = order
         request.activation.done()
-        return Response(serializer.data)
+        setattr(request.process, self.object_field_name, obj)
+        request.process.save()
+        process_data = self.process_serializer_class(request.process).data
+        return Response({'process': process_data, 'object': serializer.validated_data}, status=status.HTTP_201_CREATED)
 
 
 class UpdateFieldsRestViewMixin(GenericAPIViewWithoutCSRFEnforcement):
+    # Derived class shall:
+    # 1. implement a dispatch annotated with flow_view or flow_start_view.
+    # 2. implement a post that calls super post defined in this class and create a response.
+    # 3. define a serializer_class for the business logic model, unless fields list is empty.
+
     serializer_class = None
     task_serializer_class = TaskSerializer
     fields = None  # required for it to accept fields arguments, yet be able to get through as_view() safely.
@@ -146,10 +158,6 @@ class UpdateFieldsRestViewMixin(GenericAPIViewWithoutCSRFEnforcement):
         # incomplete implementation here; see also #post().
         perms = [permissions.IsAuthenticated(), ]
         return perms
-
-    @property
-    def model(self):
-        return self.activation.flow_class.process_class
 
     def get_object(self, queyset=None):
         # Get the business logic model object. If the derived class defines its own logical model, it shall override
@@ -186,20 +194,25 @@ class UpdateFieldsRestViewMixin(GenericAPIViewWithoutCSRFEnforcement):
         request.activation.prepare({'_viewflow_activation-started': datetime.now()}, user=request.user)
 
         obj = self.get_object()
-        for attr, value in request.data.items():
-            if attr not in self.fields:
-                raise ValidationError("'%s' is not one of the attributes this task is designed to change. "
-                                      "Allowed attributes are %s." % (attr, str(self.fields)))
-            setattr(obj, attr, value)
-        try:
-            obj.save()
-        except django.core.exceptions.ValidationError as e:
-            # Translate the django version of exception to a Rest Framework version, so that the Rest Framework may
-            # do the rest of work.
-            raise ValidationError({'messages': e.messages})
+
+        # Give more precise diagnostics info.
+        expected = set(self.fields)
+        requested = set(request.data.keys())
+        missing = expected - requested
+        unexpected = requested - expected
+        if missing:
+            raise ValidationError('These attribute(s) are required: %s.' % str(missing))
+        if unexpected:
+            raise ValidationError('These attribute(s) are unexpected: %s.' % str(unexpected))
+
+        if self.fields:  # Certain tasks may have no fields. We shall tolerate empty field list.
+            serializer = self.get_serializer(obj, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            obj = serializer.save()
 
         self.activation.done()
 
+        # We are not returning a response here!
         # Derived-class shall override this method by getting this object and construct its own response message.
         return obj
 

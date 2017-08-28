@@ -2,11 +2,18 @@ from django.core.exceptions import PermissionDenied
 from django.forms.models import modelform_factory, inlineformset_factory
 from django.views import generic
 from django.shortcuts import render, redirect
+
+from demo.shipment.serializers import ShipmentSerializer, InsuranceSerializer
 from viewflow.flow import flow_start_view
 from viewflow.flow.views import FlowViewMixin, get_next_task_url
-
+from viewflow.rest_views import StartViewRest, FinishAssignedTaskWithFieldsRestView
 
 from .models import Shipment, ShipmentItem, Insurance
+
+
+class ShipmentStartRestView(StartViewRest):
+    serializer_class = ShipmentSerializer
+    object_field_name = 'shipment'
 
 
 @flow_start_view
@@ -42,13 +49,33 @@ def start_view(request):
         'formset': formset
     })
 
+start_view.REST_VERSION = ShipmentStartRestView
+
+
+class ShipmentRestView(FinishAssignedTaskWithFieldsRestView):
+    serializer_class = ShipmentSerializer
+
+    def get_object(self, queryset=None):
+        return self.activation.process.shipment
+
 
 class ShipmentView(FlowViewMixin, generic.UpdateView):
+    REST_VERSION = ShipmentRestView
+
     def get_object(self):
         return self.activation.process.shipment
 
 
+class InsuranceRestView(FinishAssignedTaskWithFieldsRestView):
+    serializer_class = InsuranceSerializer
+    fields = ['company_name', 'cost']
+
+    def get_object(self, queyset=None):
+        return Insurance()
+
+
 class InsuranceView(FlowViewMixin, generic.CreateView):
+    REST_VERSION = InsuranceRestView
     model = Insurance
     fields = ['company_name', 'cost']
 
