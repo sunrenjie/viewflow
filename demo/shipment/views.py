@@ -73,6 +73,12 @@ class InsuranceRestView(FinishAssignedTaskWithFieldsRestView):
     def get_object(self, queyset=None):
         return Insurance()
 
+    def activation_done(self, activation, obj):
+        shipment = activation.process.shipment
+        shipment.insurance = obj
+        shipment.save()
+        super(InsuranceRestView, self).activation_done(activation, obj)
+
 
 class InsuranceView(FlowViewMixin, generic.CreateView):
     REST_VERSION = InsuranceRestView

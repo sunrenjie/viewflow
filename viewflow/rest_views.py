@@ -110,6 +110,10 @@ class StartViewRest(GenericAPIViewWithoutCSRFEnforcement):
         # Injecting owner info into validated data.
         return serializer.save(owner=self.request.user)
 
+    def activation_done(self, request, obj):
+        # A hook for the user to do something.
+        request.activation.done()
+
     @method_decorator(flow_start_view)
     @csrf_exempt
     def post(self, request, *args, **kwargs):
@@ -119,7 +123,7 @@ class StartViewRest(GenericAPIViewWithoutCSRFEnforcement):
         # (in particular, the call to activation.lock.__exit__() is very important, without which the next task won't
         # be created at all). Then we will be able access request.activation in get_permissions().
         if not request.activation.has_perm(request.user):
-            raise PermissionDenied
+            raise PermissionDenied("The user '%s' does not have permission to do this task." % request.user)
 
         # Behind activation (type: viewflow.flow.activation.ManagedStartViewActivation), there is a
         # viewflow.forms.ActivationDataForm, which is responsible for injecting a started datetime value (with
@@ -134,8 +138,9 @@ class StartViewRest(GenericAPIViewWithoutCSRFEnforcement):
         serializer.is_valid(raise_exception=True)
         obj = self.perform_create(serializer)
 
-        request.activation.done()
         setattr(request.process, self.object_field_name, obj)
+        self.activation_done(request, obj)
+
         request.process.save()
         process_data = self.process_serializer_class(request.process).data
         return Response({'process': process_data, 'object': serializer.validated_data}, status=status.HTTP_201_CREATED)
@@ -179,6 +184,10 @@ class UpdateFieldsRestViewMixin(GenericAPIViewWithoutCSRFEnforcement):
             data['object'] = obj_data
         return Response(data)
 
+    def activation_done(self, request, obj):
+        # A hook for the user to do something.
+        request.activation.done()
+
     def post(self, request, *args, **kwargs):
         if not self.activation.has_perm(request.user):
             # TODO More precise diagnostics info given to the user.
@@ -216,7 +225,7 @@ class UpdateFieldsRestViewMixin(GenericAPIViewWithoutCSRFEnforcement):
             serializer.is_valid(raise_exception=True)
             obj = serializer.save()
 
-        self.activation.done()
+        self.activation_done(request, obj)
 
         # We are not returning a response here!
         # Derived-class shall override this method by getting this object and construct its own response message.
@@ -266,10 +275,7 @@ class AssignTaskRestView(APIViewWithoutCSRFEnforcement):
             return Response({'message': 'The task cannot be assigned to you.'}, status=status.HTTP_403_FORBIDDEN)
 
         self.activation.assign(self.request.user)
-        return Response({'messsage': 'Task has been assigned to you successfully.',
-                         'link': {
-                             'detail': task_detail_url
-                         }})
+        return Response({'messsage': 'Task has been assigned to you successfully.'})
 
     @method_decorator(flow_view)
     def dispatch(self, request, *args, **kwargs):
